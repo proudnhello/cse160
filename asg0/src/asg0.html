@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>Cool Vector Drawer</title>
+    </head>
+   <body onload="main()">
+    <canvas id="example" width="400" height="400">
+      Please use a browser that supports "canvas"
+    </canvas>
+    <script src="asg0.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+
+    <br>
+    <label for="v1x">Vector 1</label>
+    <br>
+    <input type="text" id="v1x" name="v1x" size="5" />
+    <input type="text" id="v1y" name="v1y" size="5" />
+    <br>
+    
+    <br>
+    <label for="v2x">Vector 2</label>
+    <br>
+    <input type="text" id="v2x" name="v2x" size="5" />
+    <input type="text" id="v2y" name="v2y" size="5" />
+    <br>
+
+    <br>
+    <input type="button" id="drawButton" value="Draw"/>
+
+    <br>
+    <br>
+    <label for="operations">Operation:</label>
+
+    <select name="operations" id="operations">
+      <option value="">--Please choose an option--</option>
+      <option value="add">Add</option>
+      <option value="sub">Subtract</option>
+      <option value="mult">Multiply</option>
+      <option value="div">Divide</option>
+      <option value="mag">Magnitude</option>
+      <option value="norm">Normalize</option>
+      <option value="angle">Angle Between</option>
+      <option value="area">Area</option>
+    </select>
+    <label for="scalar">Scalar:</label>
+    <input type="text" id="scalar" name="scalar" size="5" />
+
+    <br>
+    <br>
+    <input type="button" id="operationButton" value="Draw"/>
+
+  </body>
+</html>
