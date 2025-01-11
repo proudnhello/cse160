@@ -44,9 +44,9 @@ class Vector3 {
       * @return this
       */
     add(other) {
-        // Insert your code here.
-        // This function should change this vector (this.elements) and not create a new vector.
-
+        for (var i = 0; i < 3; i++) {
+            this.elements[i] += other.elements[i];
+        }
         // Don't delete the return statement.
         return this;
     };
@@ -58,8 +58,9 @@ class Vector3 {
     sub(other) {
         // Insert your code here.
         // This function should change this vector (this.elements) and not create a new vector.
-
-        // Don't delete the return statement.
+        for (var i = 0; i < 3; i++) {
+            this.elements[i] -= other.elements[i];
+        }
         return this;
     };
 
@@ -70,6 +71,9 @@ class Vector3 {
     div(scalar) {
         // Insert your code here.
         // This function should change this vector (this.elements) and not create a new vector.
+        for (var i = 0; i < 3; i++) {
+            this.elements[i] /= scalar;
+        }
 
         // Don't delete the return statement.
         return this;
@@ -82,7 +86,9 @@ class Vector3 {
     mul(scalar) {
         // Insert your code here.
         // This function should change this vector (this.elements) and not create a new vector.
-
+        for (var i = 0; i < 3; i++) {
+            this.elements[i] *= scalar;
+        }
         // Don't delete the return statement.
         return this;
     };
@@ -120,7 +126,12 @@ class Vector3 {
         // Insert your code here.
         let m = 0; // Modify this line to calculate this vector's magnitude.
 
-        // Don't delete the return statement.
+        total = 0;
+        for (var i = 0; i < 3; i++) {
+            total += this.elements[i] * this.elements[i];
+        }
+
+        m = Math.sqrt(total);
         return m;
     };
 

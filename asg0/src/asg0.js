@@ -10,6 +10,9 @@ function main() {
 
     var drawButton = document.getElementById('drawButton'); 
     drawButton.onclick = handleDrawEvent;
+
+    var operationButton = document.getElementById('operationButton');
+    operationButton.onclick = handleDrawOperationEvent;
 }
 
 function drawVector(v, color){
@@ -60,4 +63,34 @@ function handleDrawEvent(){
 
     var v2 = fetchVector('v2');
     drawVector(v2, 'blue');
+}
+
+function handleDrawOperationEvent(){
+    var ctx = fetchContext();
+    clearBoard();
+
+    var v1 = fetchVector('v1');
+    drawVector(v1, 'red');
+
+    var v2 = fetchVector('v2');
+    drawVector(v2, 'blue');
+
+    var scalar = document.getElementById('scalar').value;
+
+    switch(document.getElementById('operations').value){
+        case 'add':
+            drawVector(v1.add(v2), 'green');
+            break;
+        case 'sub':
+            drawVector(v1.sub(v2), 'green');
+            break;
+        case 'mult':
+            drawVector(v1.mul(scalar), 'green');
+            drawVector(v2.mul(scalar), 'green');
+            break;
+        case 'div':
+            drawVector(v1.div(scalar), 'green');
+            drawVector(v2.div(scalar), 'green');
+            break;
+    }
 }
