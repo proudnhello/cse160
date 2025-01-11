@@ -99,5 +99,12 @@ function handleDrawOperationEvent(){
             drawVector(v1.normalize(), 'green');
             drawVector(v2.normalize(), 'green');
             break;
+        case 'angle':
+            console.log("Angle between vectors: " + angleBetweenVectors(v1, v2));
+            break;
     }
+}
+
+function angleBetweenVectors(v1, v2){
+    return Math.acos(Vector3.dot(v1.normalize(), v2.normalize()));
 }
