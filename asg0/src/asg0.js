@@ -102,9 +102,17 @@ function handleDrawOperationEvent(){
         case 'angle':
             console.log("Angle between vectors: " + angleBetweenVectors(v1, v2));
             break;
+        case 'area':
+            console.log("Area between vectors: " + areaTriangle(v1, v2));
+            break;
     }
 }
 
 function angleBetweenVectors(v1, v2){
     return Math.acos(Vector3.dot(v1.normalize(), v2.normalize()));
+}
+
+function areaTriangle(v1, v2){
+    let cross = Vector3.cross(v1, v2);
+    return cross.magnitude()/2;
 }
