@@ -2,21 +2,21 @@ SCALE_FACTOR = 20;
 // DrawRectangle.js
 function main() {
     // Retrieve <canvas> element                                  <- (1)
-    var ctx = fetchContext();
+    let ctx = fetchContext();
 
     // Draw a black rectangle                                       <- (3)
     ctx.fillStyle = 'rgba(0, 0, 0, 1.0)'; // Set a black color
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.width); // Fill a rectangle with the color
 
-    var drawButton = document.getElementById('drawButton'); 
+    let drawButton = document.getElementById('drawButton'); 
     drawButton.onclick = handleDrawEvent;
 
-    var operationButton = document.getElementById('operationButton');
+    let operationButton = document.getElementById('operationButton');
     operationButton.onclick = handleDrawOperationEvent;
 }
 
 function drawVector(v, color){
-    var ctx = fetchContext();
+    let ctx = fetchContext();
 
     centerX = ctx.canvas.width/2;
     centerY = ctx.canvas.height/2;
@@ -33,7 +33,7 @@ function drawVector(v, color){
 
 function fetchContext(){
     // Retrieve <canvas> element                                  <- (1)
-    var canvas = document.getElementById('example');
+    let canvas = document.getElementById('example');
     if (!canvas) {
         console.log('Failed to retrieve the <canvas> element');
         return;
@@ -44,7 +44,7 @@ function fetchContext(){
 }
 
 function clearBoard(){
-    var ctx = fetchContext();
+    let ctx = fetchContext();
     // Clear the board by drawing over it with a black rectangle
     ctx.fillStyle = 'rgba(0, 0, 0, 1.0)'; // Set a black color
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.width); // Fill a rectangle with the color
@@ -55,27 +55,26 @@ function fetchVector(name){
 }
 
 function handleDrawEvent(){
-    var ctx = fetchContext();
+    let ctx = fetchContext();
     clearBoard();
 
-    var v1 = fetchVector('v1');
+    let v1 = fetchVector('v1');
     drawVector(v1, 'red');
 
-    var v2 = fetchVector('v2');
+    let v2 = fetchVector('v2');
     drawVector(v2, 'blue');
 }
 
 function handleDrawOperationEvent(){
-    var ctx = fetchContext();
     clearBoard();
 
-    var v1 = fetchVector('v1');
+    let v1 = fetchVector('v1');
     drawVector(v1, 'red');
 
-    var v2 = fetchVector('v2');
+    let v2 = fetchVector('v2');
     drawVector(v2, 'blue');
 
-    var scalar = document.getElementById('scalar').value;
+    let scalar = document.getElementById('scalar').value;
 
     switch(document.getElementById('operations').value){
         case 'add':
@@ -91,6 +90,14 @@ function handleDrawOperationEvent(){
         case 'div':
             drawVector(v1.div(scalar), 'green');
             drawVector(v2.div(scalar), 'green');
+            break;
+        case 'mag':
+            console.log("Vector 1 magnitude: " + v1.magnitude());
+            console.log("Vector 2 magnitude: " + v2.magnitude());
+            break;
+        case 'norm':
+            drawVector(v1.normalize(), 'green');
+            drawVector(v2.normalize(), 'green');
             break;
     }
 }

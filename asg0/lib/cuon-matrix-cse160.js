@@ -8,7 +8,7 @@
 
 class Vector3 {
     constructor(opt_src) {
-        var v = new Float32Array(3);
+        let v = new Float32Array(3);
         if (opt_src && typeof opt_src === 'object') {
           v[0] = opt_src[0];
           v[1] = opt_src[1];
@@ -23,7 +23,7 @@ class Vector3 {
      * @return this
      */
     set(src) {
-        var i, s, d;
+        let i, s, d;
 
         s = src.elements;
         d = this.elements;
@@ -44,7 +44,7 @@ class Vector3 {
       * @return this
       */
     add(other) {
-        for (var i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) {
             this.elements[i] += other.elements[i];
         }
         // Don't delete the return statement.
@@ -58,7 +58,7 @@ class Vector3 {
     sub(other) {
         // Insert your code here.
         // This function should change this vector (this.elements) and not create a new vector.
-        for (var i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) {
             this.elements[i] -= other.elements[i];
         }
         return this;
@@ -71,7 +71,7 @@ class Vector3 {
     div(scalar) {
         // Insert your code here.
         // This function should change this vector (this.elements) and not create a new vector.
-        for (var i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) {
             this.elements[i] /= scalar;
         }
 
@@ -86,7 +86,7 @@ class Vector3 {
     mul(scalar) {
         // Insert your code here.
         // This function should change this vector (this.elements) and not create a new vector.
-        for (var i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) {
             this.elements[i] *= scalar;
         }
         // Don't delete the return statement.
@@ -126,8 +126,8 @@ class Vector3 {
         // Insert your code here.
         let m = 0; // Modify this line to calculate this vector's magnitude.
 
-        total = 0;
-        for (var i = 0; i < 3; i++) {
+        let total = 0;
+        for (let i = 0; i < 3; i++) {
             total += this.elements[i] * this.elements[i];
         }
 
@@ -143,7 +143,10 @@ class Vector3 {
         // Insert your code here.
         // This function should change this vector (this.elements) and not create a new vector.
 
-        // Don't delete the return statement.
+        let m = this.magnitude();
+        for (let i = 0; i < 3; i++) {
+            this.elements[i] /= m;
+        }
         return this;
     };
 }
