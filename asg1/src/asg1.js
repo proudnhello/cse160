@@ -30,8 +30,10 @@ let u_FragColor;
 let g_selectedColor = [1.0, 1.0, 1.0, 1.0];
 let u_selectedSize = 10;
 let g_shapes = [];
+let g_undoneShapes = [];
 let g_selectedType = POINT;
 let g_segments = 5;
+let g_currentShape = [];
 
 function setupWebGL() {
     // Retrieve <canvas> element
@@ -98,6 +100,8 @@ function addActionsForHtmlUI() {
     // Button events
     document.getElementById('clear').onclick = function() {
         g_shapes = [];
+        g_undoneShapes = [];
+        g_currentShape = [];
         renderAllShapes();
     };
 
@@ -111,6 +115,19 @@ function addActionsForHtmlUI() {
 
     document.getElementById('circles').onclick = function() {
         g_selectedType = CIRCLES;
+    }
+
+    document.getElementById('undo').onclick = function() {
+        if(g_shapes.length > 0){
+            g_undoneShapes.push(g_shapes.pop());
+            renderAllShapes();
+        }
+    }
+    document.getElementById('redo').onclick = function() {
+        if(g_undoneShapes.length > 0){
+            g_shapes.push(g_undoneShapes.pop());
+            renderAllShapes();
+        }
     }
 
     // Slider events 
@@ -162,13 +179,19 @@ function main() {
     addActionsForHtmlUI();
 
     // Register function (event handler) to be called on a mouse press
-    canvas.onmousedown = click;
+    canvas.onmousedown = function(ev) {
+        click(ev)
+    }
     canvas.onmousemove = function(ev) {
         if (ev.buttons == 1) {
             click(ev);
         }else{
             showPreview(ev);
         }
+    };
+    canvas.onmouseup = function(ev) {
+        g_shapes.push(g_currentShape.slice());
+        g_currentShape = [];
     };
 
     // If the mouse is out of the canvas, render all shapes to remove the preview
@@ -189,13 +212,13 @@ function click(ev) {
     // Store the coordinates to g_points array
     switch (g_selectedType) {
         case POINT:
-            g_shapes.push(new Point([x, y], g_selectedColor, u_selectedSize));
+            g_currentShape.push(new Point([x, y], g_selectedColor, u_selectedSize));
             break;
         case TRIANGLE:
-            g_shapes.push(new Triangle([x, y], g_selectedColor, u_selectedSize));
+            g_currentShape.push(new Triangle([x, y], g_selectedColor, u_selectedSize));
             break;
         case CIRCLES:
-            g_shapes.push(new Circle([x, y], g_selectedColor, u_selectedSize, g_segments));
+            g_currentShape.push(new Circle([x, y], g_selectedColor, u_selectedSize, g_segments));
             break;
     }
     renderAllShapes();
@@ -227,7 +250,14 @@ function renderAllShapes() {
 
     var len = g_shapes.length;
     for(var i = 0; i < len; i++) {
-        g_shapes[i].render();
+        for(var j = 0; j < g_shapes[i].length; j++) {
+            g_shapes[i][j].render();
+        }
+    }
+    if(g_currentShape != null && g_currentShape.length > 0){
+        for(var i = 0; i < g_currentShape.length; i++) {
+            g_currentShape[i].render();
+        }
     }
 
     let dur = performance.now() - peformance;
