@@ -156,8 +156,15 @@ function main() {
     canvas.onmousemove = function(ev) {
         if (ev.buttons == 1) {
             click(ev);
+        }else{
+            showPreview(ev);
         }
     };
+
+    // If the mouse is out of the canvas, render all shapes to remove the preview
+    canvas.addEventListener('mouseleave', function() {
+        renderAllShapes();
+    });
 
     // Specify the color for clearing <canvas>
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -182,6 +189,24 @@ function click(ev) {
             break;
     }
     renderAllShapes();
+}
+
+// Show preview of the shape
+// Do this by rendering all shapes and then rendering the shape that is being previewed, not saving it to the array
+function showPreview(ev){
+    renderAllShapes();
+    [x, y] = [convertCoordinates(ev).x, convertCoordinates(ev).y];
+    switch (g_selectedType) {
+        case POINT:
+            new Point([x, y], g_selectedColor, u_selectedSize).render();
+            break;
+        case TRIANGLE:
+            new Triangle([x, y], g_selectedColor, u_selectedSize).render();
+            break;
+        case CIRCLES:
+            new Circle([x, y], g_selectedColor, u_selectedSize, g_segments).render();
+            break;
+    }
 }
 
 function renderAllShapes() {
