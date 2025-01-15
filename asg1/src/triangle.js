@@ -16,8 +16,16 @@ class Triangle{
         // Pass the color of a point to u_FragColor variable
         gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
         // Draw
-        let d = this.size / 200;
-        drawTriangle([xy[0], xy[1], xy[0]+d, xy[1], xy[0], xy[1]+d]);
+        // deltaMag will be the offset from the center to the triangle's vertices
+        let deltaMag = this.size / 400;
+        // deltaComponent will be the x and y values of the vector from the center to the left and right corners of the triangle
+        let deltaXComponent = Math.cos(Math.PI / 6) * deltaMag;
+        let deltaYComponent = Math.sin(Math.PI / 6) * deltaMag;
+        let top = [xy[0], xy[1] + deltaMag];
+        let left = [xy[0] - deltaXComponent, xy[1] - deltaYComponent];
+        let right = [xy[0] + deltaXComponent, xy[1] - deltaYComponent];
+
+        drawTriangle([top[0], top[1], left[0], left[1], right[0], right[1]]);
     }
 }
 
@@ -33,7 +41,7 @@ function drawTriangle(vertices) {
 
     // Bind the buffer object to target
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    // Write date into the buffer object
+    // Write data into the buffer object
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.DYNAMIC_DRAW);
 
     // Assign the buffer object to a_Position variable
