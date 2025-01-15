@@ -50,6 +50,8 @@
       That being said, the sliders are still functional, and the color that will be used will be the one that was last changed.
       I also added an alpha channel, so that users would be able to user transparent paint. 
       This works with both the sliders and the color picker, where the alpha on the slider will be applied to whichever color is currently in use.
+      I also added a preview of whatever the user is about to draw. 
+      Instead of the user not knowing exactly where their shape is going to go, I draw a preview of the shape, so that the user can see what they are about to draw.
       Finally, I added the option to undo and redo brush strokes. 
       Instead of storing individual shapes in the shapes array, I now save all the shapes created by a single brush stroke in an array, which is then added to shapes.
       When undo is selected, the last brush stroke is removed from shapes, and added to the redo array, and visa versa for redo. 
