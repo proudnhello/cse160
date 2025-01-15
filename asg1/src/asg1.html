@@ -10,8 +10,16 @@
     Please use a browser that supports "canvas"
     </canvas>
 
+    <p id="numdot"></p>
+
     <p>
       <button id="clear">Clear</button>
+    </p>
+
+    <p>
+      <button id="points">Points</button>
+      <button id="triangles">Triangles</button>
+      <button id="circles">Circles</button>
     </p>
 
     <p>
@@ -23,6 +31,7 @@
       <br>
       <br>
       Size: <input type="range" id="size" min="1" max="100" step="1" value="10">
+      Cicrcle Segments: <input type="range" id="segments" min="3" max="20" step="1" value="5">
     </p>
 
     <p>
@@ -33,6 +42,8 @@
     <script src="../lib/webgl-debug.js"></script>
     <script src="../lib/cuon-utils.js"></script>
     <script src="asg1.js"></script>
+    <script src="triangle.js"></script>
+    <script src="circle.js"></script>
     <script src="points.js"></script>
   </body>
 </html>

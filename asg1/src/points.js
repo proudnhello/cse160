@@ -10,6 +10,9 @@ class Point{
         let xy = this.position;
         let rgba = this.color;
         let size = this.size;
+
+        gl.disableVertexAttribArray(a_Position);
+        
         // Pass the position and size of a point to a_Position and u_PointSize variable
         gl.vertexAttrib3f(a_Position, xy[0], xy[1], 0.0);
         gl.uniform1f(u_PointSize, size);
