@@ -1,4 +1,6 @@
 // ColoredPoint.js (c) 2012 matsuda
+// Help on enabling aphla blending from https://delphic.me.uk/tutorials/webgl-alpha 
+// Converting hex to rgb function from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
 // Vertex shader program
 var VSHADER_SOURCE =
     `attribute vec4 a_Position;
@@ -36,11 +38,14 @@ function setupWebGL() {
     canvas = document.getElementById('webgl');
 
     // Get the rendering context for WebGL
-    gl = canvas.getContext("webgl", {preserveDrawingBuffer: true});
+    gl = canvas.getContext("webgl", {preserveDrawingBuffer: true, premultipliedAlpha: false});  
     if (!gl) {
         console.log('Failed to get the rendering context for WebGL');
         return;
     }
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); 
 }
 
 function connectVariablesToGLSL() {
@@ -118,6 +123,9 @@ function addActionsForHtmlUI() {
     document.getElementById('blue').addEventListener('mouseup', function() {
         g_selectedColor[2] = this.value;
     });
+    document.getElementById('alpha').addEventListener('mouseup', function() {
+        g_selectedColor[3] = this.value;
+    });
 
     document.getElementById('size').addEventListener('mouseup', function() {
         u_selectedSize = this.value;
@@ -129,7 +137,9 @@ function addActionsForHtmlUI() {
 
     // Color picker event
     document.getElementById('color').addEventListener("input", function() {
-        g_selectedColor = hexToRgb(this.value);
+        let alpha = g_selectedColor[3];
+        let color = hexToRgb(this.value);
+        g_selectedColor = [color[0], color[1], color[2], alpha];
     });
 }
 
