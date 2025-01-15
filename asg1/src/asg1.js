@@ -158,6 +158,10 @@ function addActionsForHtmlUI() {
         let color = hexToRgb(this.value);
         g_selectedColor = [color[0], color[1], color[2], alpha];
     });
+
+    document.getElementById('eagle').onclick = function() {
+        drawImperialEagle();
+    }
 }
 
 function convertCoordinates(ev) {
@@ -177,8 +181,6 @@ function main() {
     connectVariablesToGLSL();
 
     addActionsForHtmlUI();
-
-    drawImperialEagle();
 
     // Register function (event handler) to be called on a mouse press
     canvas.onmousedown = function(ev) {
@@ -210,6 +212,7 @@ function main() {
 
 // Referance image for drawing https://elite-dangerous.fandom.com/wiki/Empire?file=EmpireInsignia.png
 function drawImperialEagle() {
+    let oldColor = g_selectedColor;
     thrownAwayCenter = [0.0, 0.0];
     thrownAwaySize = 1;
     let eagleShapes = [];
@@ -260,8 +263,8 @@ function drawImperialEagle() {
     eagleShapes.push(tri);
     
     g_shapes.push(eagleShapes);
-    console.log(g_shapes);
     renderAllShapes();
+    g_selectedColor = oldColor;
 }
 
 function click(ev) {
@@ -319,7 +322,6 @@ function renderAllShapes() {
     }
 
     let dur = performance.now() - peformance;
-    sendTextToHTML(`numdot: ${g_shapes.length}, ms: ${Math.floor(dur)}`, "numdot");
 }
 
 function sendTextToHTML(text, id) {

@@ -22,6 +22,7 @@
       <button id="points">Points</button>
       <button id="triangles">Triangles</button>
       <button id="circles">Circles</button>
+      <button id="eagle">Draw Picture</button>
     </p>
 
     <p>
@@ -40,6 +41,25 @@
 
     <p>
       <input type="color" id="color" value="#808080">
+    </p>
+
+    <p>
+      For the awesomeness criteria, I did a number of things. 
+      First, I added a color picker for the user to select new colors, instead of just the RGB sliders that were required.
+      This should make it easier for the user to select a color they want, instead of having to fiddle with the sliders. 
+      That being said, the sliders are still functional, and the color that will be used will be the one that was last changed.
+      I also added an alpha channel, so that users would be able to user transparent paint. 
+      This works with both the sliders and the color picker, where the alpha on the slider will be applied to whichever color is currently in use.
+      Finally, I added the option to undo and redo brush strokes. 
+      Instead of storing individual shapes in the shapes array, I now save all the shapes created by a single brush stroke in an array, which is then added to shapes.
+      When undo is selected, the last brush stroke is removed from shapes, and added to the redo array, and visa versa for redo. 
+      This makes painting much easier, as the user can now undo and redo brush strokes, instead of having to clear the entire canvas.
+    </p>
+
+    <p>
+      Referance Image: 
+      <br>
+      <image src="../img/eagle.jpg" id="eagleimg" width="400" height="400">      
     </p>
 
     <script src="../lib/webgl-utils.js"></script>
