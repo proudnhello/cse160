@@ -5,9 +5,33 @@ class Triangle{
         this.color = color.slice();
         this.size = size;
         this.type = 'triangle';
+        this.points = null
     }
 
-    render() {
+    addPoints(points){
+        this.points = points;
+    }
+
+    render(){
+        if (this.points){
+            this.renderFromPoints();
+        } else{
+            this.renderFromPosition();
+        }
+    }
+
+    renderFromPoints(){
+        let rgba = this.color;
+        let size = this.size;
+
+        gl.uniform1f(u_PointSize, size);
+        // Pass the color of a point to u_FragColor variable
+        gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
+        // Draw
+        drawTriangle([this.points[0], this.points[1], this.points[2], this.points[3], this.points[4], this.points[5]]);
+    }
+
+    renderFromPosition() {
         let xy = this.position;
         let rgba = this.color;
         let size = this.size;

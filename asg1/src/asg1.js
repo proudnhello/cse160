@@ -178,6 +178,8 @@ function main() {
 
     addActionsForHtmlUI();
 
+    drawImperialEagle();
+
     // Register function (event handler) to be called on a mouse press
     canvas.onmousedown = function(ev) {
         click(ev)
@@ -204,6 +206,62 @@ function main() {
 
     // Clear <canvas>
     gl.clear(gl.COLOR_BUFFER_BIT);
+}
+
+// Referance image for drawing https://elite-dangerous.fandom.com/wiki/Empire?file=EmpireInsignia.png
+function drawImperialEagle() {
+    thrownAwayCenter = [0.0, 0.0];
+    thrownAwaySize = 1;
+    let eagleShapes = [];
+    // First, draw the outer triangle for the insignia
+    g_selectedColor = hexToRgb("#FD6A02");
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([0.9, 0.9, -0.9, 0.9, 0, -0.9])
+    eagleShapes.push(tri);
+
+    // Draw the inner triangle for the insignia
+    g_selectedColor = hexToRgb("#8E918F");
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([0.8, 0.85, -0.8, 0.85, 0, -0.8])
+    eagleShapes.push(tri);
+
+    // Draw wings
+    g_selectedColor = hexToRgb("#FD6A02");
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([0.7, 0.8, 0.15, 0.15, 0.0, 0.3])
+    eagleShapes.push(tri);
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([-0.7, 0.8, -0.15, 0.15, -0.0, 0.3])
+    eagleShapes.push(tri);
+
+    // Draw body
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([0.0, 0.3, -0.15, 0.15, 0.15, 0.15])
+    eagleShapes.push(tri);
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([0.0, -0.2, -0.15, 0.15, 0.15, 0.15])
+    eagleShapes.push(tri);
+
+    // Draw head
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([0.0, 0.35, -0.05, 0.4, 0.15, 0.45])
+    eagleShapes.push(tri);
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([0.0, 0.6, -0.05, 0.4, 0.15, 0.45])
+    eagleShapes.push(tri);
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([0.0, 0.6, 0.1, 0.65, 0.15, 0.45])
+    eagleShapes.push(tri);
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([0.0, 0.6, 0.1, 0.65, -0.1, 0.65])
+    eagleShapes.push(tri);
+    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
+    tri.addPoints([-0.1, 0.65, -0.1, 0.6, 0.0, 0.65])
+    eagleShapes.push(tri);
+    
+    g_shapes.push(eagleShapes);
+    console.log(g_shapes);
+    renderAllShapes();
 }
 
 function click(ev) {
