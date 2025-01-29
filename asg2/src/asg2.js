@@ -44,9 +44,18 @@ let g_globalXAngle = 0;
 let g_leftLegAngle = 0;
 let g_rightLegAngle = 0;
 let g_bodyAngle = 0;
+let g_maxBodyAngle = 80;
 let g_facePlateAngle = 0;
 
-let g_animated = true;
+let g_tongueBaseX = 10;
+let g_tongueBaseY = 0;
+let g_tongueMiddleX = 0;
+let g_tongueMiddleY = 0;
+let g_tongueTipX = 0;
+let g_tongueTipY = 0;
+
+
+let g_animated = false;
 
 function setupWebGL() {
     // Retrieve <canvas> element
@@ -150,11 +159,42 @@ function addActionsForHtmlUI() {
 
     document.getElementById("bodySlide").addEventListener('mousemove', function(ev) {
         g_bodyAngle = ev.target.value;
+        g_maxBodyAngle = ev.target.max;
         renderAllShapes();
     });
 
     document.getElementById("facePlateSlide").addEventListener('mousemove', function(ev) {
         g_facePlateAngle = ev.target.value;
+        renderAllShapes();
+    });
+
+    document.getElementById("tongueBaseXSlide").addEventListener('mousemove', function(ev) {
+        g_tongueBaseX = ev.target.value;
+        renderAllShapes();
+    });
+
+    document.getElementById("tongueBaseYSlide").addEventListener('mousemove', function(ev) {
+        g_tongueBaseY = ev.target.value;
+        renderAllShapes();
+    });
+
+    document.getElementById("tongueMiddleXSlide").addEventListener('mousemove', function(ev) {
+        g_tongueMiddleX = ev.target.value;
+        renderAllShapes();
+    });
+
+    document.getElementById("tongueMiddleYSlide").addEventListener('mousemove', function(ev) {
+        g_tongueMiddleY = ev.target.value;
+        renderAllShapes();
+    });
+
+    document.getElementById("tongueTipXSlide").addEventListener('mousemove', function(ev) {
+        g_tongueTipX = ev.target.value;
+        renderAllShapes();
+    });
+
+    document.getElementById("tongueTipYSlide").addEventListener('mousemove', function(ev) {
+        g_tongueTipY = ev.target.value;
         renderAllShapes();
     });
 
@@ -166,6 +206,20 @@ function addActionsForHtmlUI() {
         g_animated = false;
         renderAllShapes();
     });
+
+    document.getElementById("webgl").addEventListener("click", shiftClick);
+    document.getElementById("webgl").addEventListener("mousemove", click);
+}
+
+function click(ev) {
+    if (ev.buttons == 1 && !ev.shiftKey) {
+        let coords = convertCoordinates(ev);
+        g_globalYAngle = coords.x * 180 * -1;
+        g_globalXAngle = coords.y * 180;
+
+        document.getElementById("angleSlide").value = g_globalYAngle;
+        document.getElementById("angleXSlide").value = g_globalXAngle;
+    }
 }
 
 function convertCoordinates(ev) {
@@ -199,16 +253,30 @@ function main() {
 var g_startTime = performance.now() / 1000.0;
 var g_seconds = performance.now() / 1000.0 - g_startTime;
 
+var g_pokeAnimation = false;
+var g_pokeStartTime = 0;
+var g_pokeSeconds = 0;
+var g_pokeDuration = 2;
+
 function tick() {
     g_seconds = performance.now() / 1000.0 - g_startTime;
     renderAllShapes();
     requestAnimationFrame(tick);
 }
 
+function shiftClick(ev) {
+    if(ev.shiftKey) {
+        // Start poke animation
+        g_pokeAnimation = true;
+        g_pokeStartTime = performance.now() / 1000.0;
+        console.log("Poke animation started");
+    }
+}
+
 function renderAllShapes() {
     let peformance = performance.now();
 
-    if (g_animated) {
+    if (g_animated && !g_pokeAnimation) {
         g_leftLegAngle = 45 * Math.sin(g_seconds * 5);
         g_rightLegAngle = -45 * Math.sin(g_seconds * 5);
         g_bodyAngle = Math.abs(5 * Math.sin(g_seconds * 5));
@@ -219,6 +287,41 @@ function renderAllShapes() {
         document.getElementById("facePlateSlide").value = g_facePlateAngle;
     }
 
+    if(g_pokeAnimation){
+        g_pokeSeconds = performance.now() / 1000.0 - g_pokeStartTime;
+        let pokePortion = g_pokeSeconds / g_pokeDuration;
+        let mouthOpenLength = 0.1
+        // let swirlPortion = g_pokeSeconds / (g_pokeDuration - 2*mouthOpenLength);
+        if(g_pokeSeconds > g_pokeDuration){
+            g_pokeAnimation = false;
+            g_pokeSeconds = 0;
+            g_bodyAngle = 0;
+        }else{
+            // Set the body angle to completely open at the start of the animation, then close it at the end
+            if(pokePortion < mouthOpenLength){
+                g_bodyAngle = 80 * (pokePortion * 1/mouthOpenLength);
+            }else if(pokePortion > 1 - mouthOpenLength){
+                g_bodyAngle = 80 * ((1 - pokePortion) * 1/mouthOpenLength);
+            }
+            // Make the tongue move in a wave pattern both horizontally and vertically
+            g_tongueBaseX = 10 + (10 * Math.sin(pokePortion *  Math.PI));
+            g_tongueMiddleX = 20 * Math.sin(pokePortion * 2 * Math.PI);
+            g_tongueTipX = 20 * Math.sin(pokePortion * 2 * Math.PI);
+
+            g_tongueBaseY = 20 * Math.sin(pokePortion * 4 * Math.PI);
+            g_tongueMiddleY = 20 * Math.sin(pokePortion * 4 * Math.PI);
+            g_tongueTipY = 20 * Math.sin(pokePortion * 4 * Math.PI);
+        }
+
+        document.getElementById("bodySlide").value = g_bodyAngle;
+        document.getElementById("tongueBaseXSlide").value = g_tongueBaseX;
+        document.getElementById("tongueBaseYSlide").value = g_tongueBaseY;
+        document.getElementById("tongueMiddleXSlide").value = g_tongueMiddleX;
+        document.getElementById("tongueMiddleYSlide").value = g_tongueMiddleY;
+        document.getElementById("tongueTipXSlide").value = g_tongueTipX;
+        document.getElementById("tongueTipYSlide").value = g_tongueTipY;
+    }
+
     // Clear <canvas>
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
@@ -227,11 +330,46 @@ function renderAllShapes() {
     globalRotateMatrix.rotate(g_globalXAngle, 1, 0, 0);
     gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotateMatrix.elements);
 
-    var tongueBase = new Cylinder(10);
-    tongueBase.color = [1.0, 0.0, 0.0, 1.0];
+    let openAmount = g_bodyAngle / g_maxBodyAngle;
+    let tongueProportion = 0;
+    // Scale open amount to tongue proportion so that tongue proportion is 1 when open amount is 0.5
+    if (openAmount < 0.5) {
+        tongueProportion = 2 * openAmount;
+    } else {
+        tongueProportion = 1;
+    }
+    let tongueSegmentLength = 0.45 * tongueProportion;
+    let tongueSegmentWidth = 0.1 * tongueProportion;
+    let tongueSegments = 6;
+    var tongueBase = new Cylinder(tongueSegments);
+    tongueBase.color = [.8, 0.0, 0.0, 1.0];
+    tongueBase.matrix.translate(0, -0.2, 0.25);
+    tongueBase.matrix.rotate(-90, 1, 0, 0);
+    tongueBase.matrix.rotate(g_tongueBaseX, 1, 0, 0);
+    tongueBase.matrix.rotate(g_tongueBaseY, 0, 0, 1);
+    let baseCoords = new Matrix4(tongueBase.matrix);
+    tongueBase.matrix.scale(tongueSegmentWidth, tongueSegmentLength, tongueSegmentWidth);
     tongueBase.render();
 
-    return // REMOVE THIS LINE TO RENDER EVERYTHING ELSE
+    var tongueMiddle = new Cylinder(tongueSegments);
+    tongueMiddle.color = [.6, 0.0, 0.0, 1.0];
+    tongueMiddle.matrix = new Matrix4(baseCoords);
+    tongueMiddle.matrix.translate(0, tongueSegmentLength, 0);
+    tongueMiddle.matrix.rotate(g_tongueMiddleX, 1, 0, 0);
+    tongueMiddle.matrix.rotate(g_tongueMiddleY, 0, 0, 1);
+    let middleCoords = new Matrix4(tongueMiddle.matrix);
+    tongueMiddle.matrix.scale(tongueSegmentWidth*0.8, tongueSegmentLength, tongueSegmentWidth*0.8);
+    tongueMiddle.render()
+
+    var tongueTip = new Cylinder(tongueSegments);
+    tongueTip.color = [.4, 0.0, 0.0, 1.0];
+    tongueTip.matrix = new Matrix4(middleCoords);
+    tongueTip.matrix.translate(0, tongueSegmentLength, 0);
+    tongueTip.matrix.rotate(g_tongueTipX, 1, 0, 0);
+    tongueTip.matrix.rotate(g_tongueTipY, 0, 0, 1);
+    tongueTip.matrix.scale(tongueSegmentWidth*0.6, tongueSegmentLength, tongueSegmentWidth*0.6);
+    tongueTip.render()
+
     var topBody = new Cube();
     topBody.color = [1.0, 0.0, 0.0, 1.0];
     topBody.matrix.translate(0, -0.2, 0.25);
@@ -269,7 +407,7 @@ function renderAllShapes() {
     bottomPack.render();
 
     var rightLeg = new Cube();
-    rightLeg.color = [1.0, 0.0, 0.0, 1.0];
+    rightLeg.color = [.8, 0.0, 0.0, 1.0];
     rightLeg.matrix.translate(0.225, -0.40, 0);
     rightLeg.matrix.rotate(g_rightLegAngle, 1, 0, 0);
     rightLeg.matrix.translate(0, -0.175, 0);
@@ -277,14 +415,13 @@ function renderAllShapes() {
     rightLeg.render();
 
     var leftLeg = new Cube();
-    leftLeg.color = [1.0, 0.0, 0.0, 1.0];
+    leftLeg.color = [.8, 0.0, 0.0, 1.0];
     leftLeg.matrix.translate(-0.225, -0.40, 0);
     leftLeg.matrix.rotate(g_leftLegAngle, 1, 0, 0);
     leftLeg.matrix.translate(0, -0.175, 0);
     leftLeg.matrix.scale(.3, .4, .3);
     leftLeg.render();
 
-    let dur = performance.now() - peformance;
 }
 
 function sendTextToHTML(text, id) {
