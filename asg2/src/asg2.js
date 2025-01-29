@@ -5,8 +5,10 @@
 var VSHADER_SOURCE =
     `attribute vec4 a_Position;
     uniform float u_PointSize;
+    uniform mat4 u_ModelMatrix;
+    uniform mat4 u_GlobalRotateMatrix;
     void main() {
-        gl_Position = a_Position;
+        gl_Position = u_GlobalRotateMatrix * u_ModelMatrix * a_Position;
         gl_PointSize = u_PointSize;
     }`;
 
@@ -27,6 +29,7 @@ let gl;
 let a_Position;
 let u_PointSize;
 let u_FragColor;
+let u_ModelMatrix;
 let g_selectedColor = [1.0, 1.0, 1.0, 1.0];
 let u_selectedSize = 10;
 let g_shapes = [];
@@ -34,6 +37,11 @@ let g_undoneShapes = [];
 let g_selectedType = POINT;
 let g_segments = 5;
 let g_currentShape = [];
+let g_globalAngle = 0;
+
+let g_leftLegAngle = 0;
+let g_rightLegAngle = 0;
+let g_bodyAngle = 0;
 
 function setupWebGL() {
     // Retrieve <canvas> element
@@ -46,8 +54,7 @@ function setupWebGL() {
         return;
     }
 
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); 
+    gl.enable(gl.DEPTH_TEST);
 }
 
 function connectVariablesToGLSL() {
@@ -77,6 +84,25 @@ function connectVariablesToGLSL() {
         console.log('Failed to get the storage location of u_FragColor');
         return;
     }
+
+    // Get the storage location of u_ModelMatrix
+    u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
+    if (!u_ModelMatrix) {
+        console.log('Failed to get the storage location of u_ModelMatrix');
+        return;
+    }
+
+    // Get the storage location of u_GlobalRotateMatrix
+    u_GlobalRotateMatrix = gl.getUniformLocation(gl.program, 'u_GlobalRotateMatrix');
+    if (!u_GlobalRotateMatrix) {
+        console.log('Failed to get the storage location of u_GlobalRotateMatrix');
+        return;
+    }
+
+    var identityM = new Matrix4();
+    gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
+    identityM = new Matrix4();
+    gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, identityM.elements);
 }
 
 // This hex function heavily based on the one from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
@@ -97,71 +123,25 @@ function hexToRgb(hex) {
 // Copied function ends here
 
 function addActionsForHtmlUI() {
-    // Button events
-    document.getElementById('clear').onclick = function() {
-        g_shapes = [];
-        g_undoneShapes = [];
-        g_currentShape = [];
+    document.getElementById("angleSlide").addEventListener('mousemove', function(ev) {
+        g_globalAngle = ev.target.value;
         renderAllShapes();
-    };
-
-    document.getElementById('points').onclick = function() {
-        g_selectedType = POINT;
-    }
-
-    document.getElementById('triangles').onclick = function() {
-        g_selectedType = TRIANGLE;
-    }
-
-    document.getElementById('circles').onclick = function() {
-        g_selectedType = CIRCLES;
-    }
-
-    document.getElementById('undo').onclick = function() {
-        if(g_shapes.length > 0){
-            g_undoneShapes.push(g_shapes.pop());
-            renderAllShapes();
-        }
-    }
-    document.getElementById('redo').onclick = function() {
-        if(g_undoneShapes.length > 0){
-            g_shapes.push(g_undoneShapes.pop());
-            renderAllShapes();
-        }
-    }
-
-    // Slider events 
-    document.getElementById('red').addEventListener('mouseup', function() {
-        g_selectedColor[0] = this.value;
-    });
-    document.getElementById('green').addEventListener('mouseup', function() {
-        g_selectedColor[1] = this.value;
-    });
-    document.getElementById('blue').addEventListener('mouseup', function() {
-        g_selectedColor[2] = this.value;
-    });
-    document.getElementById('alpha').addEventListener('mouseup', function() {
-        g_selectedColor[3] = this.value;
     });
 
-    document.getElementById('size').addEventListener('mouseup', function() {
-        u_selectedSize = this.value;
+    document.getElementById("rightLegSlide").addEventListener('mousemove', function(ev) {
+        g_rightLegAngle = ev.target.value;
+        renderAllShapes();
     });
 
-    document.getElementById('segments').addEventListener('mouseup', function() {
-        g_segments = this.value;
+    document.getElementById("leftLegSlide").addEventListener('mousemove', function(ev) {
+        g_leftLegAngle = ev.target.value;
+        renderAllShapes();
     });
 
-    // Color picker event
-    document.getElementById('color').addEventListener("input", function() {
-        let alpha = g_selectedColor[3];
-        let color = hexToRgb(this.value);
-        g_selectedColor = [color[0], color[1], color[2], alpha];
+    document.getElementById("bodySlide").addEventListener('mousemove', function(ev) {
+        g_bodyAngle = ev.target.value;
+        renderAllShapes();
     });
-
-    document.getElementById('eagle').onclick = function() {
-        drawImperialEagle();
-    }
 }
 
 function convertCoordinates(ev) {
@@ -182,151 +162,63 @@ function main() {
 
     addActionsForHtmlUI();
 
-    // Register function (event handler) to be called on a mouse press
-    canvas.onmousedown = function(ev) {
-        click(ev)
-    }
-    canvas.onmousemove = function(ev) {
-        if (ev.buttons == 1) {
-            click(ev);
-        }else{
-            showPreview(ev);
-        }
-    };
-    canvas.onmouseup = function(ev) {
-        g_shapes.push(g_currentShape.slice());
-        g_currentShape = [];
-    };
-
-    // If the mouse is out of the canvas, render all shapes to remove the preview
-    canvas.addEventListener('mouseleave', function() {
-        renderAllShapes();
-    });
-
     // Specify the color for clearing <canvas>
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
     // Clear <canvas>
-    // gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     renderAllShapes();
-}
-
-// Referance image for drawing https://elite-dangerous.fandom.com/wiki/Empire?file=EmpireInsignia.png
-function drawImperialEagle() {
-    let oldColor = g_selectedColor;
-    thrownAwayCenter = [0.0, 0.0];
-    thrownAwaySize = 1;
-    let eagleShapes = [];
-    // First, draw the outer triangle for the insignia
-    g_selectedColor = hexToRgb("#FD6A02");
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([0.9, 0.9, -0.9, 0.9, 0, -0.9])
-    eagleShapes.push(tri);
-
-    // Draw the inner triangle for the insignia
-    g_selectedColor = hexToRgb("#8E918F");
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([0.8, 0.85, -0.8, 0.85, 0, -0.8])
-    eagleShapes.push(tri);
-
-    // Draw wings
-    g_selectedColor = hexToRgb("#FD6A02");
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([0.7, 0.8, 0.15, 0.15, 0.0, 0.3])
-    eagleShapes.push(tri);
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([-0.7, 0.8, -0.15, 0.15, -0.0, 0.3])
-    eagleShapes.push(tri);
-
-    // Draw body
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([0.0, 0.3, -0.15, 0.15, 0.15, 0.15])
-    eagleShapes.push(tri);
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([0.0, -0.2, -0.15, 0.15, 0.15, 0.15])
-    eagleShapes.push(tri);
-
-    // Draw head
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([0.0, 0.35, -0.05, 0.4, 0.15, 0.45])
-    eagleShapes.push(tri);
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([0.0, 0.6, -0.05, 0.4, 0.15, 0.45])
-    eagleShapes.push(tri);
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([0.0, 0.6, 0.1, 0.65, 0.15, 0.45])
-    eagleShapes.push(tri);
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([0.0, 0.6, 0.1, 0.65, -0.1, 0.65])
-    eagleShapes.push(tri);
-    tri = new Triangle(thrownAwayCenter, g_selectedColor, thrownAwaySize);
-    tri.addPoints([-0.1, 0.65, -0.1, 0.6, 0.0, 0.65])
-    eagleShapes.push(tri);
-    
-    g_shapes.push(eagleShapes);
-    renderAllShapes();
-    g_selectedColor = oldColor;
 }
 
 function click(ev) {
-    [x, y] = [convertCoordinates(ev).x, convertCoordinates(ev).y];
-
-    // Store the coordinates to g_points array
-    switch (g_selectedType) {
-        case POINT:
-            g_currentShape.push(new Point([x, y], g_selectedColor, u_selectedSize));
-            break;
-        case TRIANGLE:
-            g_currentShape.push(new Triangle([x, y], g_selectedColor, u_selectedSize));
-            break;
-        case CIRCLES:
-            g_currentShape.push(new Circle([x, y], g_selectedColor, u_selectedSize, g_segments));
-            break;
-    }
-    renderAllShapes();
-}
-
-// Show preview of the shape
-// Do this by rendering all shapes and then rendering the shape that is being previewed, not saving it to the array
-function showPreview(ev){
-    renderAllShapes();
-    [x, y] = [convertCoordinates(ev).x, convertCoordinates(ev).y];
-    switch (g_selectedType) {
-        case POINT:
-            new Point([x, y], g_selectedColor, u_selectedSize).render();
-            break;
-        case TRIANGLE:
-            new Triangle([x, y], g_selectedColor, u_selectedSize).render();
-            break;
-        case CIRCLES:
-            new Circle([x, y], g_selectedColor, u_selectedSize, g_segments).render();
-            break;
-    }
+    return
 }
 
 function renderAllShapes() {
     let peformance = performance.now();
 
     // Clear <canvas>
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    
+    var globalRotateMatrix = new Matrix4();
+    globalRotateMatrix.rotate(g_globalAngle, 0, 1, 0);
+    gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotateMatrix.elements);
 
-    // var len = g_shapes.length;
-    // for(var i = 0; i < len; i++) {
-    //     for(var j = 0; j < g_shapes[i].length; j++) {
-    //         g_shapes[i][j].render();
-    //     }
-    // }
-    // if(g_currentShape != null && g_currentShape.length > 0){
-    //     for(var i = 0; i < g_currentShape.length; i++) {
-    //         g_currentShape[i].render();
-    //     }
-    // }
+    var topBody = new Cube();
+    topBody.color = [1.0, 0.0, 0.0, 1.0];
+    topBody.matrix.translate(0, -0.2, 0.25);
+    topBody.matrix.rotate(g_bodyAngle, 1, 0, 0);
+    topBody.matrix.translate(0, 0.4, -0.25);
+    topBody.matrix.scale(.8, 0.8, .5);
+    topBody.render();
 
-    drawTriangle3D([-1, 0, 0,  -0.5, -1, 0,  0, 0, 0]);
+    var bottomBody = new Cube();
+    bottomBody.color = [1.0, 0.0, 0.0, 1.0];
+    bottomBody.matrix.translate(0, -0.3, 0);
+    bottomBody.matrix.scale(.8, 0.2, .5);
+    bottomBody.render();
 
-    var cube = new Cube();
-    cube.color = [1.0, 0.0, 0.0, 1.0];
-    cube.render();
+    var facePlate = new Cube();
+    facePlate.color = [0, 0.0, 1.0, 1.0];
+    facePlate.matrix.translate(0, 0.25, -0.25);
+    facePlate.matrix.scale(.6, .3, .2);
+    facePlate.render();
+
+    var rightLeg = new Cube();
+    rightLeg.color = [1.0, 0.0, 0.0, 1.0];
+    rightLeg.matrix.translate(0.225, -0.40, 0);
+    rightLeg.matrix.rotate(g_rightLegAngle, 1, 0, 0);
+    rightLeg.matrix.translate(0, -0.175, 0);
+    rightLeg.matrix.scale(.3, .4, .3);
+    rightLeg.render();
+
+    var leftLeg = new Cube();
+    leftLeg.color = [1.0, 0.0, 0.0, 1.0];
+    leftLeg.matrix.translate(-0.225, -0.40, 0);
+    leftLeg.matrix.rotate(g_leftLegAngle, 1, 0, 0);
+    leftLeg.matrix.translate(0, -0.175, 0);
+    leftLeg.matrix.scale(.3, .4, .3);
+    leftLeg.render();
 
     let dur = performance.now() - peformance;
 }

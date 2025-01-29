@@ -11,57 +11,12 @@
     </canvas>
 
     <p id="numdot"></p>
-
+    
     <p>
-      <button id="undo">Undo</button>
-      <button id="redo">Redo</button>
-      <button id="clear">Clear</button>
-    </p>
-
-    <p>
-      <button id="points">Points</button>
-      <button id="triangles">Triangles</button>
-      <button id="circles">Circles</button>
-      <button id="eagle">Draw Picture</button>
-    </p>
-
-    <p>
-      Red: <input type="range" id="red" min="0" max="1" step="0.01" value="0.5"> 
-      <br>
-      Green: <input type="range" id="green" min="0" max="1" step="0.01" value="0.5"> 
-      <br>
-      Blue: <input type="range" id="blue" min="0" max="1" step="0.01" value="0.5"> 
-      <br>
-      Alpha: <input type="range" id="alpha" min="0" max="1" step="0.01" value="1">
-      <br>
-      <br>
-      Size: <input type="range" id="size" min="1" max="100" step="1" value="10">
-      Cicrcle Segments: <input type="range" id="segments" min="3" max="20" step="1" value="5">
-    </p>
-
-    <p>
-      <input type="color" id="color" value="#808080">
-    </p>
-
-    <p>
-      For the awesomeness criteria, I did a number of things. 
-      First, I added a color picker for the user to select new colors, instead of just the RGB sliders that were required.
-      This should make it easier for the user to select a color they want, instead of having to fiddle with the sliders. 
-      That being said, the sliders are still functional, and the color that will be used will be the one that was last changed.
-      I also added an alpha channel, so that users would be able to user transparent paint. 
-      This works with both the sliders and the color picker, where the alpha on the slider will be applied to whichever color is currently in use.
-      I also added a preview of whatever the user is about to draw. 
-      Instead of the user not knowing exactly where their shape is going to go, I draw a preview of the shape, so that the user can see what they are about to draw.
-      Finally, I added the option to undo and redo brush strokes. 
-      Instead of storing individual shapes in the shapes array, I now save all the shapes created by a single brush stroke in an array, which is then added to shapes.
-      When undo is selected, the last brush stroke is removed from shapes, and added to the redo array, and visa versa for redo. 
-      This makes painting much easier, as the user can now undo and redo brush strokes, instead of having to clear the entire canvas.
-    </p>
-
-    <p>
-      Referance Image: 
-      <br>
-      <image src="../img/eagle.jpg" id="eagleimg" width="400" height="400">      
+      Camera Angle <input type="range" min="0" max="360" value="5" class="slider" id="angleSlide">
+      Right Leg <input type="range" min="-45" max="45" value="0" class="slider" id="rightLegSlide">
+      Left Leg <input type="range" min="-45" max="45" value="0" class="slider" id="leftLegSlide">
+      Body <input type="range" min="0" max="80" value="0" class="slider" id="bodySlide">
     </p>
 
     <script src="../lib/webgl-utils.js"></script>
