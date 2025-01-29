@@ -228,8 +228,15 @@ function renderAllShapes() {
     topBody.matrix.scale(.8, 0.8, .5);
     topBody.render();
 
+    var topPack = new Cube();
+    topPack.color = [1.0, 0.0, 0.0, 1.0];
+    topPack.matrix = new Matrix4(bodyCoords);
+    topPack.matrix.translate(0, 0.3, 0.1);
+    topPack.matrix.scale(.6, .6, .2);
+    topPack.render();
+
     var facePlate = new Cube();
-    facePlate.matrix = bodyCoords;
+    facePlate.matrix = new Matrix4(bodyCoords);
     facePlate.color = [0, 0.0, 1.0, 1.0];
     facePlate.matrix.translate(0, 0.5, -0.5);
     facePlate.matrix.rotate(g_facePlateAngle, 0, 0, 1);
@@ -241,6 +248,12 @@ function renderAllShapes() {
     bottomBody.matrix.translate(0, -0.3, 0);
     bottomBody.matrix.scale(.8, 0.2, .5);
     bottomBody.render();
+
+    var bottomPack = new Cube();
+    bottomPack.color = [1.0, 0.0, 0.0, 1.0];
+    bottomPack.matrix.translate(0, -0.25, .35);
+    bottomPack.matrix.scale(.6, 0.15, .2);
+    bottomPack.render();
 
     var rightLeg = new Cube();
     rightLeg.color = [1.0, 0.0, 0.0, 1.0];
