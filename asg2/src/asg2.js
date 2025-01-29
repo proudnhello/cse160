@@ -42,6 +42,9 @@ let g_globalAngle = 0;
 let g_leftLegAngle = 0;
 let g_rightLegAngle = 0;
 let g_bodyAngle = 0;
+let g_facePlateAngle = 0;
+
+let g_animated = true;
 
 function setupWebGL() {
     // Retrieve <canvas> element
@@ -142,6 +145,20 @@ function addActionsForHtmlUI() {
         g_bodyAngle = ev.target.value;
         renderAllShapes();
     });
+
+    document.getElementById("facePlateSlide").addEventListener('mousemove', function(ev) {
+        g_facePlateAngle = ev.target.value;
+        renderAllShapes();
+    });
+
+    document.getElementById("animate").addEventListener("click", function(ev) {
+        g_animated = true;
+    });
+
+    document.getElementById("stopAnimate").addEventListener("click", function(ev) {
+        g_animated = false;
+        renderAllShapes();
+    });
 }
 
 function convertCoordinates(ev) {
@@ -168,14 +185,32 @@ function main() {
     // Clear <canvas>
     gl.clear(gl.COLOR_BUFFER_BIT);
     renderAllShapes();
+
+    tick();
 }
 
-function click(ev) {
-    return
+var g_startTime = performance.now() / 1000.0;
+var g_seconds = performance.now() / 1000.0 - g_startTime;
+
+function tick() {
+    g_seconds = performance.now() / 1000.0 - g_startTime;
+    renderAllShapes();
+    requestAnimationFrame(tick);
 }
 
 function renderAllShapes() {
     let peformance = performance.now();
+
+    if (g_animated) {
+        g_leftLegAngle = 45 * Math.sin(g_seconds * 5);
+        g_rightLegAngle = -45 * Math.sin(g_seconds * 5);
+        g_bodyAngle = Math.abs(5 * Math.sin(g_seconds * 5));
+        g_facePlateAngle = 10 * Math.sin(g_seconds * 5);
+        document.getElementById("rightLegSlide").value = g_rightLegAngle;
+        document.getElementById("leftLegSlide").value = g_leftLegAngle;
+        document.getElementById("bodySlide").value = g_bodyAngle;
+        document.getElementById("facePlateSlide").value = g_facePlateAngle;
+    }
 
     // Clear <canvas>
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -188,21 +223,24 @@ function renderAllShapes() {
     topBody.color = [1.0, 0.0, 0.0, 1.0];
     topBody.matrix.translate(0, -0.2, 0.25);
     topBody.matrix.rotate(g_bodyAngle, 1, 0, 0);
+    var bodyCoords = new Matrix4(topBody.matrix);
     topBody.matrix.translate(0, 0.4, -0.25);
     topBody.matrix.scale(.8, 0.8, .5);
     topBody.render();
+
+    var facePlate = new Cube();
+    facePlate.matrix = bodyCoords;
+    facePlate.color = [0, 0.0, 1.0, 1.0];
+    facePlate.matrix.translate(0, 0.5, -0.5);
+    facePlate.matrix.rotate(g_facePlateAngle, 0, 0, 1);
+    facePlate.matrix.scale(.6, .3, .2);
+    facePlate.render();
 
     var bottomBody = new Cube();
     bottomBody.color = [1.0, 0.0, 0.0, 1.0];
     bottomBody.matrix.translate(0, -0.3, 0);
     bottomBody.matrix.scale(.8, 0.2, .5);
     bottomBody.render();
-
-    var facePlate = new Cube();
-    facePlate.color = [0, 0.0, 1.0, 1.0];
-    facePlate.matrix.translate(0, 0.25, -0.25);
-    facePlate.matrix.scale(.6, .3, .2);
-    facePlate.render();
 
     var rightLeg = new Cube();
     rightLeg.color = [1.0, 0.0, 0.0, 1.0];
