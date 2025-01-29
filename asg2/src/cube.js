@@ -13,9 +13,7 @@ class Cube{
     }
 
     render() {
-        let xy = this.position;
         let rgba = this.color;
-        let size = this.size;
         let colorReduction = 0.1
         let colorPercent = 1
 

@@ -13,7 +13,9 @@
     <p id="numdot"></p>
     
     <p>
-      Camera Angle <input type="range" min="0" max="360" value="5" class="slider" id="angleSlide">
+      Camera Angle <br> 
+      X <input type="range" min="-180" max="180" value="5" class="slider" id="angleXSlide">
+      Y <input type="range" min="0" max="360" value="5" class="slider" id="angleSlide">
       <br>
       Right Leg <input type="range" min="-45" max="45" value="0" class="slider" id="rightLegSlide">
       <br>
@@ -22,6 +24,18 @@
       Body <input type="range" min="0" max="80" value="0" class="slider" id="bodySlide">
       <br>
       Face Plate <input type="range" min="-30" max="30" value="0" class="slider" id="facePlateSlide">
+    </p>
+    <p>
+      Tongue Controls (You may need to open the body to see the tongue) <br>
+      Tongue Base<input type="range" min="-30" max="30" value="0" class="slider" id="tongueBaseXSlide">
+      <input type="range" min="-30" max="30" value="0" class="slider" id="tongueBaseYSlide">
+      <br>
+      Tongue Middle<input type="range" min="-30" max="30" value="0" class="slider" id="tongueMiddleXSlide">
+      <input type="range" min="-30" max="30" value="0" class="slider" id="tongueMiddleYSlide">
+      <br>
+      Tongue Tip<input type="range" min="-30" max="30" value="0" class="slider" id="tongueTipXSlide">
+      <input type="range" min="-30" max="30" value="0" class="slider" id="tongueTipYSlide">
+
     </p>
     <br>
     <p>
@@ -37,6 +51,7 @@
     <script src="triangle.js"></script>
     <script src="circle.js"></script>
     <script src="cube.js"></script>
+    <script src="cylinder.js"></script>
     <script src="points.js"></script>
   </body>
 </html>

@@ -37,7 +37,9 @@ let g_undoneShapes = [];
 let g_selectedType = POINT;
 let g_segments = 5;
 let g_currentShape = [];
-let g_globalAngle = 0;
+
+let g_globalYAngle = 0;
+let g_globalXAngle = 0;
 
 let g_leftLegAngle = 0;
 let g_rightLegAngle = 0;
@@ -127,7 +129,12 @@ function hexToRgb(hex) {
 
 function addActionsForHtmlUI() {
     document.getElementById("angleSlide").addEventListener('mousemove', function(ev) {
-        g_globalAngle = ev.target.value;
+        g_globalYAngle = ev.target.value;
+        renderAllShapes();
+    });
+    
+    document.getElementById("angleXSlide").addEventListener('mousemove', function(ev) {
+        g_globalXAngle = ev.target.value;
         renderAllShapes();
     });
 
@@ -216,9 +223,15 @@ function renderAllShapes() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
     var globalRotateMatrix = new Matrix4();
-    globalRotateMatrix.rotate(g_globalAngle, 0, 1, 0);
+    globalRotateMatrix.rotate(g_globalYAngle, 0, 1, 0);
+    globalRotateMatrix.rotate(g_globalXAngle, 1, 0, 0);
     gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotateMatrix.elements);
 
+    var tongueBase = new Cylinder(10);
+    tongueBase.color = [1.0, 0.0, 0.0, 1.0];
+    tongueBase.render();
+
+    return // REMOVE THIS LINE TO RENDER EVERYTHING ELSE
     var topBody = new Cube();
     topBody.color = [1.0, 0.0, 0.0, 1.0];
     topBody.matrix.translate(0, -0.2, 0.25);
