@@ -2,7 +2,7 @@
 // Help on enabling aphla blending from https://delphic.me.uk/tutorials/webgl-alpha 
 // Converting hex to rgb function from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
 // Vertex shader program
-var VSHADER_SOURCE =
+let VSHADER_SOURCE =
     `attribute vec4 a_Position;
     uniform float u_PointSize;
     uniform mat4 u_ModelMatrix;
@@ -13,7 +13,7 @@ var VSHADER_SOURCE =
     }`;
 
 // Fragment shader program
-var FSHADER_SOURCE =
+let FSHADER_SOURCE =
     `precision mediump float;
     uniform vec4 u_FragColor;
     void main() {
@@ -113,7 +113,7 @@ function connectVariablesToGLSL() {
         return;
     }
 
-    var identityM = new Matrix4();
+    let identityM = new Matrix4();
     gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
     identityM = new Matrix4();
     gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, identityM.elements);
@@ -122,7 +122,7 @@ function connectVariablesToGLSL() {
 // This hex function heavily based on the one from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
 // There didn't seem to be a built-in function in JavaScript to convert hex to rgb, and I do not like regex, so I found this
 function hexToRgb(hex) {
-    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     let r = result ? {
       r: parseInt(result[1], 16),
       g: parseInt(result[2], 16),
@@ -250,17 +250,31 @@ function main() {
     tick();
 }
 
-var g_startTime = performance.now() / 1000.0;
-var g_seconds = performance.now() / 1000.0 - g_startTime;
+let g_startTime = performance.now() / 1000.0;
+let g_seconds = performance.now() / 1000.0 - g_startTime;
 
-var g_pokeAnimation = false;
-var g_pokeStartTime = 0;
-var g_pokeSeconds = 0;
-var g_pokeDuration = 2;
+let g_pokeAnimation = false;
+let g_pokeStartTime = 0;
+let g_pokeSeconds = 0;
+let g_pokeDuration = 2;
+let g_time = 0;
 
+let frameTracker = [];
 function tick() {
     g_seconds = performance.now() / 1000.0 - g_startTime;
     renderAllShapes();
+    let duration = performance.now() - g_time;
+    g_time = performance.now();
+    frameTracker.push(duration);
+    if(frameTracker.length > 50){
+        frameTracker.shift();
+    }
+    let average = 0;
+    frameTracker.forEach((frame) => {
+        average += frame;
+    });
+    average /= frameTracker.length;
+    sendTextToHTML('FPS = ' + Math.floor(1000 / average), 'numdot');
     requestAnimationFrame(tick);
 }
 
@@ -269,13 +283,10 @@ function shiftClick(ev) {
         // Start poke animation
         g_pokeAnimation = true;
         g_pokeStartTime = performance.now() / 1000.0;
-        console.log("Poke animation started");
     }
 }
 
 function renderAllShapes() {
-    let peformance = performance.now();
-
     if (g_animated && !g_pokeAnimation) {
         g_leftLegAngle = 45 * Math.sin(g_seconds * 5);
         g_rightLegAngle = -45 * Math.sin(g_seconds * 5);
@@ -325,7 +336,7 @@ function renderAllShapes() {
     // Clear <canvas>
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
-    var globalRotateMatrix = new Matrix4();
+    let globalRotateMatrix = new Matrix4();
     globalRotateMatrix.rotate(g_globalYAngle, 0, 1, 0);
     globalRotateMatrix.rotate(g_globalXAngle, 1, 0, 0);
     gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotateMatrix.elements);
@@ -338,12 +349,14 @@ function renderAllShapes() {
     } else {
         tongueProportion = 1;
     }
+
+    // Variables for the body parts
     let tongueSegmentLength = 0.45 * tongueProportion;
     let tongueSegmentWidth = 0.1 * tongueProportion;
     let tongueSegments = 6;
-    var tongueBase = new Cylinder(tongueSegments);
+    let tongueBase = new Cylinder(tongueSegments);
     tongueBase.color = [.8, 0.0, 0.0, 1.0];
-    tongueBase.matrix.translate(0, -0.2, 0.25);
+    tongueBase.matrix.translate(0, -0.2, 0.25);g_time
     tongueBase.matrix.rotate(-90, 1, 0, 0);
     tongueBase.matrix.rotate(g_tongueBaseX, 1, 0, 0);
     tongueBase.matrix.rotate(g_tongueBaseY, 0, 0, 1);
@@ -351,7 +364,7 @@ function renderAllShapes() {
     tongueBase.matrix.scale(tongueSegmentWidth, tongueSegmentLength, tongueSegmentWidth);
     tongueBase.render();
 
-    var tongueMiddle = new Cylinder(tongueSegments);
+    let tongueMiddle = new Cylinder(tongueSegments);
     tongueMiddle.color = [.6, 0.0, 0.0, 1.0];
     tongueMiddle.matrix = new Matrix4(baseCoords);
     tongueMiddle.matrix.translate(0, tongueSegmentLength, 0);
@@ -361,7 +374,7 @@ function renderAllShapes() {
     tongueMiddle.matrix.scale(tongueSegmentWidth*0.8, tongueSegmentLength, tongueSegmentWidth*0.8);
     tongueMiddle.render()
 
-    var tongueTip = new Cylinder(tongueSegments);
+    let tongueTip = new Cylinder(tongueSegments);
     tongueTip.color = [.4, 0.0, 0.0, 1.0];
     tongueTip.matrix = new Matrix4(middleCoords);
     tongueTip.matrix.translate(0, tongueSegmentLength, 0);
@@ -370,23 +383,23 @@ function renderAllShapes() {
     tongueTip.matrix.scale(tongueSegmentWidth*0.6, tongueSegmentLength, tongueSegmentWidth*0.6);
     tongueTip.render()
 
-    var topBody = new Cube();
+    let topBody = new Cube();
     topBody.color = [1.0, 0.0, 0.0, 1.0];
     topBody.matrix.translate(0, -0.2, 0.25);
     topBody.matrix.rotate(g_bodyAngle, 1, 0, 0);
-    var bodyCoords = new Matrix4(topBody.matrix);
+    let bodyCoords = new Matrix4(topBody.matrix);
     topBody.matrix.translate(0, 0.4, -0.25);
     topBody.matrix.scale(.8, 0.8, .5);
     topBody.render();
 
-    var topPack = new Cube();
+    let topPack = new Cube();
     topPack.color = [1.0, 0.0, 0.0, 1.0];
     topPack.matrix = new Matrix4(bodyCoords);
     topPack.matrix.translate(0, 0.3, 0.1);
     topPack.matrix.scale(.6, .6, .2);
     topPack.render();
 
-    var facePlate = new Cube();
+    let facePlate = new Cube();
     facePlate.matrix = new Matrix4(bodyCoords);
     facePlate.color = [0, 0.0, 1.0, 1.0];
     facePlate.matrix.translate(0, 0.5, -0.5);
@@ -394,19 +407,19 @@ function renderAllShapes() {
     facePlate.matrix.scale(.6, .3, .2);
     facePlate.render();
 
-    var bottomBody = new Cube();
+    let bottomBody = new Cube();
     bottomBody.color = [1.0, 0.0, 0.0, 1.0];
     bottomBody.matrix.translate(0, -0.3, 0);
     bottomBody.matrix.scale(.8, 0.2, .5);
     bottomBody.render();
 
-    var bottomPack = new Cube();
+    let bottomPack = new Cube();
     bottomPack.color = [1.0, 0.0, 0.0, 1.0];
     bottomPack.matrix.translate(0, -0.25, .35);
     bottomPack.matrix.scale(.6, 0.15, .2);
     bottomPack.render();
 
-    var rightLeg = new Cube();
+    let rightLeg = new Cube();
     rightLeg.color = [.8, 0.0, 0.0, 1.0];
     rightLeg.matrix.translate(0.225, -0.40, 0);
     rightLeg.matrix.rotate(g_rightLegAngle, 1, 0, 0);
@@ -414,7 +427,7 @@ function renderAllShapes() {
     rightLeg.matrix.scale(.3, .4, .3);
     rightLeg.render();
 
-    var leftLeg = new Cube();
+    let leftLeg = new Cube();
     leftLeg.color = [.8, 0.0, 0.0, 1.0];
     leftLeg.matrix.translate(-0.225, -0.40, 0);
     leftLeg.matrix.rotate(g_leftLegAngle, 1, 0, 0);
@@ -425,7 +438,7 @@ function renderAllShapes() {
 }
 
 function sendTextToHTML(text, id) {
-    var htmlElm = document.getElementById(id);
+    let htmlElm = document.getElementById(id);
     if (!htmlElm) {
         console.log(`Failed to get the storage location of ${id}`);
         return;
