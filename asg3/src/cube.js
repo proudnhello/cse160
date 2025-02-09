@@ -10,12 +10,15 @@ class Cube{
         if (matrix != null){
             this.matrix.set(matrix);
         }
+        this.textureNum = -3; // By default, use error purple
     }
 
     render() {
         let rgba = this.color;
         let colorReduction = 0.1
         let colorPercent = 1
+
+        gl.uniform1i(u_whichtexture, this.textureNum);
 
         // Pass the color of a point to u_FragColor variable
         gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
