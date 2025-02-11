@@ -7,10 +7,12 @@ let VSHADER_SOURCE =
     uniform float u_PointSize;
     uniform mat4 u_ModelMatrix;
     uniform mat4 u_GlobalRotateMatrix;
+    uniform mat4 u_ViewMatrix;
+    uniform mat4 u_ProjectionMatrix;
     attribute vec2 a_UV;
     varying vec2 v_UV;
     void main() {
-        gl_Position = u_GlobalRotateMatrix * u_ModelMatrix * a_Position;
+        gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_GlobalRotateMatrix * u_ModelMatrix * a_Position;
         gl_PointSize = u_PointSize;
         v_UV = a_UV;
     }`;
@@ -62,6 +64,8 @@ let g_currentShape = [];
 
 let g_globalYAngle = 0;
 let g_globalXAngle = 0;
+let g_moveStep = 0.1;
+let g_rotationModiefier = 100;
 
 let g_animated = false;
 
@@ -142,6 +146,20 @@ function connectVariablesToGLSL() {
         return;
     }
 
+    // Get the storage location of the view matrix
+    u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+    if (!u_ViewMatrix) {
+        console.log('Failed to get the storage location of u_ViewMatrix');
+        return;
+    }
+
+    // Get the storage location of the projection matrix
+    u_ProjectionMatrix = gl.getUniformLocation(gl.program, 'u_ProjectionMatrix');
+    if (!u_ProjectionMatrix) {
+        console.log('Failed to get the storage location of u_ProjectionMatrix');
+        return;
+    }
+
     let identityM = new Matrix4();
     gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
     identityM = new Matrix4();
@@ -205,14 +223,11 @@ function hexToRgb(hex) {
 function addActionsForHtmlUI() {
     document.getElementById("webgl").addEventListener("click", shiftClick);
     document.getElementById("webgl").addEventListener("mousemove", click);
-}
-
-function click(ev) {
-    if (ev.buttons == 1 && !ev.shiftKey) {
-        let coords = convertCoordinates(ev);
-        g_globalYAngle = coords.x * 180 * -1;
-        g_globalXAngle = coords.y * 180;
-    }
+    document.getElementById("webgl").addEventListener("mouseup", function(ev) {
+        lastX = -1;
+        lastY = -1;
+    });
+    document.onkeydown = keydown;
 }
 
 function convertCoordinates(ev) {
@@ -276,10 +291,33 @@ function shiftClick(ev) {
     }
 }
 
+var g_eye = new Vector3([0, 0, 3])
+var g_lookat = new Vector3([0, 0, -100])
+var g_up = new Vector3([0, 1, 0])
 function renderAllShapes() {
     // Clear <canvas>
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
+
+    // Define the projection matrix
+    let projectionMatrix = new Matrix4();
+    projectionMatrix.setPerspective(60, canvas.width / canvas.height, .1, 100);
+    gl.uniformMatrix4fv(u_ProjectionMatrix, false, projectionMatrix.elements);
+
+    // Define the view matrix
+    let viewMatrix = new Matrix4();
+    viewMatrix.setLookAt(
+        g_eye.elements[0], 
+        g_eye.elements[1], 
+        g_eye.elements[2], 
+        g_lookat.elements[0], 
+        g_lookat.elements[1], 
+        g_lookat.elements[2], 
+        g_up.elements[0], 
+        g_up.elements[1], 
+        g_up.elements[2]);
+    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+
+    // Define the rotation matrix
     let globalRotateMatrix = new Matrix4();
     globalRotateMatrix.rotate(g_globalYAngle, 0, 1, 0);
     globalRotateMatrix.rotate(g_globalXAngle, 1, 0, 0);
@@ -289,6 +327,90 @@ function renderAllShapes() {
     textureTest.textureNum = 0;
     textureTest.matrix = new Matrix4(globalRotateMatrix);
     textureTest.render();
+}
+
+function keydown(ev) {
+    if(ev.key == 'w') {
+        moveFwdOrBwd(g_moveStep);
+    }
+    if(ev.key == 's') {
+        moveFwdOrBwd(-g_moveStep);
+    }
+    if(ev.key == 'a') {
+        moveLOrR(g_moveStep);
+    }
+    if(ev.key == 'd') {
+        moveLOrR(-g_moveStep);
+    }
+}
+
+let lastX = -1;
+let lastY = -1;
+function click(ev) {
+    if (ev.buttons == 1) {
+        if(lastX == -1) {
+            lastX = ev.clientX;
+            lastY = ev.clientY;
+        }else{
+            let diffX = ev.clientX - lastX;
+            let diffY = ev.clientY - lastY;
+            lastX = ev.clientX;
+            lastY = ev.clientY;
+            rotateY(diffX / g_rotationModiefier);
+            rotateX(-diffY / g_rotationModiefier);
+        }
+    }
+}
+
+function fetchDirection() {
+    let direction = new Vector3();
+    direction.set(g_lookat);
+    direction.sub(g_eye);
+    direction.normalize();
+    return direction;
+}
+
+function moveFwdOrBwd(amount) {
+    let direction = fetchDirection();
+    direction.mul(amount);
+    g_eye.add(direction);
+    g_lookat.add(direction);
+}
+
+function moveLOrR(amount) {
+    let direction = fetchDirection();
+    let left = Vector3.cross(direction, g_up);
+    left.normalize();
+    left.mul(amount);
+    g_eye.sub(left);
+    g_lookat.sub(left);
+}
+
+function rotateY(angle) {
+    let atp = new Vector3();
+    atp.set(g_lookat);
+    atp.sub(g_eye);
+    // I'll be ignoring the y component for now, as we're rotating around the y axis
+    atp.elements[1] = 0;
+    let r = atp.magnitude();
+    let theta = Math.atan2(atp.elements[2], atp.elements[0]);
+    theta += angle;
+    g_lookat.elements[0] = g_eye.elements[0] + r * Math.cos(theta);
+    g_lookat.elements[2] = g_eye.elements[2] + r * Math.sin(theta);
+}
+
+function rotateX(angle) {
+    let atp = new Vector3();
+    atp.set(g_lookat);
+    atp.sub(g_eye);
+
+    // I'll be ignoring the x component , as we're rotating around the x axis
+    atp.elements[0] = 0;
+    let r = atp.magnitude();
+    let theta = Math.atan2(atp.elements[2], atp.elements[1]);
+    theta += angle;
+    g_lookat.elements[1] = g_eye.elements[1] + r * Math.cos(theta);
+    g_lookat.elements[2] = g_eye.elements[2] + r * Math.sin(theta);
 }
 
 function sendTextToHTML(text, id) {
