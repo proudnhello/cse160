@@ -253,6 +253,7 @@ function main() {
     // Specify the color for clearing <canvas>
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
+    cam = new Camera();
     // Clear <canvas>
     gl.clear(gl.COLOR_BUFFER_BIT);
     renderAllShapes();
@@ -291,9 +292,7 @@ function shiftClick(ev) {
     }
 }
 
-var g_eye = new Vector3([0, 0, 3])
-var g_lookat = new Vector3([0, 0, -100])
-var g_up = new Vector3([0, 1, 0])
+var cam;
 function renderAllShapes() {
     // Clear <canvas>
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -305,16 +304,8 @@ function renderAllShapes() {
 
     // Define the view matrix
     let viewMatrix = new Matrix4();
-    viewMatrix.setLookAt(
-        g_eye.elements[0], 
-        g_eye.elements[1], 
-        g_eye.elements[2], 
-        g_lookat.elements[0], 
-        g_lookat.elements[1], 
-        g_lookat.elements[2], 
-        g_up.elements[0], 
-        g_up.elements[1], 
-        g_up.elements[2]);
+    let viewArray = cam.fetchArray();
+    viewMatrix.setLookAt(viewArray[0], viewArray[1], viewArray[2], viewArray[3], viewArray[4], viewArray[5], viewArray[6], viewArray[7], viewArray[8]);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
     // Define the rotation matrix
@@ -331,16 +322,16 @@ function renderAllShapes() {
 
 function keydown(ev) {
     if(ev.key == 'w') {
-        moveFwdOrBwd(g_moveStep);
+        cam.moveFwdOrBwd(g_moveStep);
     }
     if(ev.key == 's') {
-        moveFwdOrBwd(-g_moveStep);
+        cam.moveFwdOrBwd(-g_moveStep);
     }
     if(ev.key == 'a') {
-        moveLOrR(g_moveStep);
+        cam.moveLOrR(g_moveStep);
     }
     if(ev.key == 'd') {
-        moveLOrR(-g_moveStep);
+        cam.moveLOrR(-g_moveStep);
     }
 }
 
@@ -356,61 +347,10 @@ function click(ev) {
             let diffY = ev.clientY - lastY;
             lastX = ev.clientX;
             lastY = ev.clientY;
-            rotateY(diffX / g_rotationModiefier);
-            rotateX(-diffY / g_rotationModiefier);
+            cam.rotateY(diffX / g_rotationModiefier);
+            cam.rotateX(-diffY / g_rotationModiefier);
         }
     }
-}
-
-function fetchDirection() {
-    let direction = new Vector3();
-    direction.set(g_lookat);
-    direction.sub(g_eye);
-    direction.normalize();
-    return direction;
-}
-
-function moveFwdOrBwd(amount) {
-    let direction = fetchDirection();
-    direction.mul(amount);
-    g_eye.add(direction);
-    g_lookat.add(direction);
-}
-
-function moveLOrR(amount) {
-    let direction = fetchDirection();
-    let left = Vector3.cross(direction, g_up);
-    left.normalize();
-    left.mul(amount);
-    g_eye.sub(left);
-    g_lookat.sub(left);
-}
-
-function rotateY(angle) {
-    let atp = new Vector3();
-    atp.set(g_lookat);
-    atp.sub(g_eye);
-    // I'll be ignoring the y component for now, as we're rotating around the y axis
-    atp.elements[1] = 0;
-    let r = atp.magnitude();
-    let theta = Math.atan2(atp.elements[2], atp.elements[0]);
-    theta += angle;
-    g_lookat.elements[0] = g_eye.elements[0] + r * Math.cos(theta);
-    g_lookat.elements[2] = g_eye.elements[2] + r * Math.sin(theta);
-}
-
-function rotateX(angle) {
-    let atp = new Vector3();
-    atp.set(g_lookat);
-    atp.sub(g_eye);
-
-    // I'll be ignoring the x component , as we're rotating around the x axis
-    atp.elements[0] = 0;
-    let r = atp.magnitude();
-    let theta = Math.atan2(atp.elements[2], atp.elements[1]);
-    theta += angle;
-    g_lookat.elements[1] = g_eye.elements[1] + r * Math.cos(theta);
-    g_lookat.elements[2] = g_eye.elements[2] + r * Math.sin(theta);
 }
 
 function sendTextToHTML(text, id) {

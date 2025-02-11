@@ -1,8 +1,9 @@
 class Camera{
     constructor(){
-        this.eye = new Vector3(0, 0, 3);
-        this.lookat = new Vector3(0, 0, -100);
-        this.up = new Vector3(0, 1, 0);
+        this.eye = new Vector3([0, 0, 3]);
+        this.lookat = new Vector3([0, 0, -100]);
+        this.up = new Vector3([0, 1, 0]);
+        console.log(this.eye.elements);
     }
 
     fetchArray(){
@@ -34,7 +35,7 @@ class Camera{
     
     moveLOrR(amount) {
         let direction = this.fetchDirection();
-        let left = Vector3.cross(direction, g_up);
+        let left = Vector3.cross(direction, this.up);
         left.normalize();
         left.mul(amount);
         this.eye.sub(left);
