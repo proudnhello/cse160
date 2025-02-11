@@ -65,7 +65,7 @@ let g_currentShape = [];
 let g_globalYAngle = 0;
 let g_globalXAngle = 0;
 let g_moveStep = 0.1;
-let g_rotationModiefier = 100;
+let g_rotationModiefier = 3;
 
 let g_animated = false;
 
@@ -347,8 +347,7 @@ function click(ev) {
             let diffY = ev.clientY - lastY;
             lastX = ev.clientX;
             lastY = ev.clientY;
-            cam.rotateY(diffX / g_rotationModiefier);
-            cam.rotateX(-diffY / g_rotationModiefier);
+            cam.rotate(diffX / g_rotationModiefier, -diffY / g_rotationModiefier);
         }
     }
 }

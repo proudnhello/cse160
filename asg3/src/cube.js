@@ -29,38 +29,38 @@ class Cube{
         let topUV = [0,0, 0,1, 1,1]
         // Front face
         gl.uniform4f(u_FragColor, rgba[0] * colorPercent, rgba[1] * colorPercent, rgba[2] * colorPercent, rgba[3]);
-        drawTriangle3DUV([-0.5, -0.5, -0.5,  -0.5, 0.5, -0.5,  0.5, 0.5, -0.5], bottomUV);
-        drawTriangle3DUV([-0.5, -0.5, -0.5,  0.5, -0.5, -0.5,  0.5, 0.5, -0.5], topUV);
+        drawTriangle3DUV([0, 0, 0,  0, 1, 0,  1, 1, 0], bottomUV);
+        drawTriangle3DUV([0, 0, 0,  1, 0, 0,  1, 1, 0], topUV);
         colorPercent -= colorReduction
 
         // Back
         gl.uniform4f(u_FragColor, rgba[0] * colorPercent, rgba[1] * colorPercent, rgba[2] * colorPercent, rgba[3]);
-        drawTriangle3DUV([-0.5, -0.5, 0.5,  -0.5, 0.5, 0.5,  0.5, 0.5, 0.5], bottomUV);
-        drawTriangle3DUV([-0.5, -0.5, 0.5,  0.5, -0.5, 0.5,  0.5, 0.5, 0.5], topUV);
+        drawTriangle3DUV([0, 0, 1,  0, 1, 1,  1, 1, 1], bottomUV);
+        drawTriangle3DUV([0, 0, 1,  1, 0, 1,  1, 1, 1], topUV);
         colorPercent -= colorReduction
 
         // Top
         gl.uniform4f(u_FragColor, rgba[0] * colorPercent, rgba[1] * colorPercent, rgba[2] * colorPercent, rgba[3]);
-        drawTriangle3DUV([-0.5, 0.5, -0.5,  0.5, 0.5, -0.5,  0.5, 0.5, 0.5], bottomUV);
-        drawTriangle3DUV([-0.5, 0.5, -0.5,  -0.5, 0.5, 0.5,  0.5, 0.5, 0.5], topUV);
+        drawTriangle3DUV([0, 1, 0,  1, 1, 0,  1, 1, 1], bottomUV);
+        drawTriangle3DUV([0, 1, 0,  0, 1, 1,  1, 1, 1], topUV);
         colorPercent -= colorReduction
 
         // Bottom
         gl.uniform4f(u_FragColor, rgba[0] * colorPercent, rgba[1] * colorPercent, rgba[2] * colorPercent, rgba[3]);
-        drawTriangle3DUV([-0.5, -0.5, -0.5,  0.5, -0.5, -0.5,  0.5, -0.5, 0.5], bottomUV);
-        drawTriangle3DUV([-0.5, -0.5, -0.5,  -0.5, -0.5, 0.5,  0.5, -0.5, 0.5], topUV);
+        drawTriangle3DUV([0, 0, 0,  1, 0, 0,  1, 0, 1], bottomUV);
+        drawTriangle3DUV([0, 0, 0,  0, 0, 1,  1, 0, 1], topUV);
         colorPercent -= colorReduction
 
         // Left
         gl.uniform4f(u_FragColor, rgba[0] * colorPercent, rgba[1] * colorPercent, rgba[2] * colorPercent, rgba[3]);
-        drawTriangle3DUV([-0.5, -0.5, 0.5,  -0.5, 0.5, 0.5,  -0.5, 0.5, -0.5], bottomUV);
-        drawTriangle3DUV([-0.5, -0.5, 0.5,  -0.5, -0.5, -0.5,  -0.5, 0.5, -0.5], topUV);
+        drawTriangle3DUV([0, 0, 1,  0, 1, 1,  0, 1, 0], bottomUV);
+        drawTriangle3DUV([0, 0, 1,  0, 0, 0,  0, 1, 0], topUV);
         colorPercent -= colorReduction
 
         // Right
         gl.uniform4f(u_FragColor, rgba[0] * colorPercent, rgba[1] * colorPercent, rgba[2] * colorPercent, rgba[3]);
-        drawTriangle3DUV([0.5, -0.5, -0.5,  0.5, 0.5, -0.5,  0.5, 0.5, 0.5], bottomUV);
-        drawTriangle3DUV([0.5, -0.5, -0.5,  0.5, -0.5, 0.5,  0.5, 0.5, 0.5], topUV);
+        drawTriangle3DUV([1, 0, 0,  1, 1, 0,  1, 1, 1], bottomUV);
+        drawTriangle3DUV([1, 0, 0,  1, 0, 1,  1, 1, 1], topUV);
         colorPercent -= colorReduction
     }
 }
