@@ -31,6 +31,8 @@ class Camera{
     
     moveFwdOrBwd(amount) {
         let direction = this.fetchDirection();
+        direction.elements[1] = 0;
+        direction.normalize();
         direction.mul(amount);
         this.eye.add(direction);
         this.lookat.add(direction);
@@ -38,6 +40,8 @@ class Camera{
     
     moveLOrR(amount) {
         let direction = this.fetchDirection();
+        direction.elements[1] = 0;
+        direction.normalize();
         let left = Vector3.cross(direction, this.up);
         left.normalize();
         left.mul(amount);

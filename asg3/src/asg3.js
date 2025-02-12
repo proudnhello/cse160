@@ -1,6 +1,11 @@
 // ColoredPoint.js (c) 2012 matsuda
 // Help on enabling aphla blending from https://delphic.me.uk/tutorials/webgl-alpha 
 // Converting hex to rgb function from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+
+// Notes on performance
+// With the current implementation, the program runs at about 40fps on my machine, with 9216 cubes on screen (32x32x9)
+// In order to get the fps down to 10 as mentioned on the rubric, I need to have 327768 cubes on screen (32x32x32)
+// So, while it would be possible to improve performance (combining cubes into a single buffer, for example), I don't think it's necessary
 // Vertex shader program
 let VSHADER_SOURCE =
     `attribute vec4 a_Position;
@@ -381,24 +386,17 @@ let g_map = [
 ];
 
 function renderMap() {
-    let wall = new Cube();
-    wall.matrix = new Matrix4();
-    wall.textureNum = 0;
-    let x = 0;
-    let y = 0;
-    let z = 0;
-    wall.matrix.translate(x, y, z);
-    wall.fastRender();
+    let verts = [];
+
     for (let i = 0; i < g_map.length; i++) {
         for (let j = 0; j < g_map[i].length; j++) {
             // If the value is 0, then there is no wall, so we skip it
-            // if(g_map[i][j] === 0) {
-            //     continue;
-            // }
+            if(g_map[i][j] === 0) {
+                continue;
+            }
             // The texture number is the last digit of the number, and the height is the first digit, so we can get them by dividing and getting the remainder
             let textureNum = g_map[i][j] % 10;
             let height = Math.floor(g_map[i][j] / 10);
-            height = 9
             for(let k = 0; k < height; k++) {
                 let wall = new Cube();
                 wall.matrix = new Matrix4();
@@ -425,6 +423,12 @@ function keydown(ev) {
     }
     if(ev.key == 'd') {
         cam.moveLOrR(-g_moveStep);
+    }
+    if(ev.key == 'q') {
+        cam.rotate(-g_moveStep * 100, 0);
+    }
+    if(ev.key == 'e') {
+        cam.rotate(g_moveStep * 100, 0);
     }
 }
 

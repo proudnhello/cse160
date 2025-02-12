@@ -12,6 +12,21 @@ class Cube{
         }
         this.textureNum = -3; // By default, use error purple
         this.colorReduction = 0.1;
+
+        // Precomputed vertices for the cube
+        this.cubeVerts = [
+            0,0,0, 1,0,  0,1,0, 1,1,  1,1,0, 0,1, 
+            0,0,0, 1,0,  1,0,0, 0,0,  1,1,0, 0,1,
+            0,0,1, 1,0,  0,1,1, 1,1,  1,1,1, 0,1,
+            0,0,1, 1,0,  1,0,1, 0,0,  1,1,1, 0,1, 
+            0,1,0, 1,0,  1,1,0, 1,1,  1,1,1, 0,1,
+            0,1,0, 1,0,  0,1,1, 0,0,  1,1,1, 0,1,
+            0,0,0, 1,0,  1,0,0, 1,1,  1,0,1, 0,1,
+            0,0,0, 1,0,  0,0,1, 0,0,  1,0,1, 0,1,
+            0,0,1, 1,0,  0,1,1, 1,1,  0,1,0, 0,1,
+            0,0,1, 1,0,  0,0,0, 0,0,  0,1,0, 0,1,
+            1,0,0, 1,0,  1,1,0, 1,1,  1,1,1, 0,1,
+            1,0,0, 1,0,  1,0,1, 0,0,  1,1,1, 0,1]
     }
 
     render() {
@@ -66,7 +81,6 @@ class Cube{
 
     fastRender(){
         let rgba = this.color;
-        let colorPercent = 1
 
         gl.uniform1i(u_whichtexture, this.textureNum);
 
@@ -75,54 +89,7 @@ class Cube{
 
         gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
 
-        let bottomUV = [1,0, 1,1, 0,1]
-        let topUV = [1,0, 0,0, 0,1]
-        let verticies = []
-        let uv = []
-        // Front face
-        //gl.uniform4f(u_FragColor, rgba[0] * colorPercent, rgba[1] * colorPercent, rgba[2] * colorPercent, rgba[3]);
-        verticies = verticies.concat([0, 0, 0,  0, 1, 0,  1, 1, 0])
-        uv = uv.concat(bottomUV)
-        verticies = verticies.concat([0, 0, 0,  1, 0, 0,  1, 1, 0]);
-        uv = uv.concat(topUV);
-        colorPercent -= this.colorReduction
-
-        // Back
-        verticies = verticies.concat([0, 0, 1,  0, 1, 1,  1, 1, 1]);
-        uv = uv.concat(bottomUV);
-        verticies = verticies.concat([0, 0, 1,  1, 0, 1,  1, 1, 1]);
-        uv = uv.concat(topUV);
-        colorPercent -= this.colorReduction;
-
-        // Top
-        verticies = verticies.concat([0, 1, 0,  1, 1, 0,  1, 1, 1]);
-        uv = uv.concat(bottomUV);
-        verticies = verticies.concat([0, 1, 0,  0, 1, 1,  1, 1, 1]);
-        uv = uv.concat(topUV);
-        colorPercent -= this.colorReduction;
-
-        // Bottom
-        verticies = verticies.concat([0, 0, 0,  1, 0, 0,  1, 0, 1]);
-        uv = uv.concat(bottomUV);
-        verticies = verticies.concat([0, 0, 0,  0, 0, 1,  1, 0, 1]);
-        uv = uv.concat(topUV);
-        colorPercent -= this.colorReduction;
-
-        // Left
-        verticies = verticies.concat([0, 0, 1,  0, 1, 1,  0, 1, 0]);
-        uv = uv.concat(bottomUV);
-        verticies = verticies.concat([0, 0, 1,  0, 0, 0,  0, 1, 0]);
-        uv = uv.concat(topUV);
-        colorPercent -= this.colorReduction;
-
-        // Right
-        verticies = verticies.concat([1, 0, 0,  1, 1, 0,  1, 1, 1]);
-        uv = uv.concat(bottomUV);
-        verticies = verticies.concat([1, 0, 0,  1, 0, 1,  1, 1, 1]);
-        uv = uv.concat(topUV);
-        colorPercent -= this.colorReduction
-
-        drawTriangle3DUV(this.interleaveAttributes(verticies, uv));
+        drawTriangle3DUV(this.cubeVerts);
     }
 
     interleaveAttributes(vertices, uv){

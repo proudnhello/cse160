@@ -53,6 +53,7 @@ class Triangle{
     }
 }
 
+
 function drawTriangle(vertices) {
     var n = 3; // The number of vertices
 
@@ -101,34 +102,42 @@ function drawTriangle3D(vertices) {
     gl.drawArrays(gl.TRIANGLES, 0, n);
 }
 
-// I bet I could interleave the vertices and uv coordinates in the same buffer
-// Performance enhancement maybe? ill do it if/when i need to
-function drawTriangle3DUV(vertices) {
-    var n = vertices.length/5; // The number of vertices
+let g_vertexBuffer = null;
+let FSIZE = 4;
 
+function initVertexBuffers() {
     // Create a buffer object
-    var vertexBuffer = gl.createBuffer();
-    if (!vertexBuffer) {
+    g_vertexBuffer = gl.createBuffer();
+    if (!g_vertexBuffer) {
         console.log('Failed to create the buffer object');
         return -1;
     }
 
-    let bufferVerts = new Float32Array(vertices)
     // Bind the buffer object to target
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    // Write data into the buffer object
-    gl.bufferData(gl.ARRAY_BUFFER, bufferVerts, gl.DYNAMIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, g_vertexBuffer);
 
-    var FSIZE = bufferVerts.BYTES_PER_ELEMENT;
     // Assign the buffer object to a_Position variable
     gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 5, 0);
-
-    // Enable the assignment to a_Position variable
     gl.enableVertexAttribArray(a_Position);
 
     // Assign the buffer object to a_Position variable
     gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, FSIZE * 5, FSIZE * 3);
     gl.enableVertexAttribArray(a_UV);
+}
+
+function drawTriangle3DUV(vertices) {
+    var n = vertices.length/5; // The number of vertices
+    let bufferVerts = new Float32Array(vertices)
+    FSIZE = bufferVerts.BYTES_PER_ELEMENT;
+
+    // Create a buffer object
+    if (!g_vertexBuffer) {
+        console.log('Failed to create the buffer object');
+        initVertexBuffers();
+    }
+
+    // Write data into the buffer object
+    gl.bufferData(gl.ARRAY_BUFFER, bufferVerts, gl.DYNAMIC_DRAW);
 
     gl.drawArrays(gl.TRIANGLES, 0, n);
 }
