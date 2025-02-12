@@ -52,6 +52,65 @@ class Camera{
         }
         return false
     }
+
+    placeWall(texture) {
+        let xz = this.findGridPosition();
+        let x = xz[0];
+        let z = xz[1];
+
+        // Find the grid position being looked at
+        let direction = this.fetchDirection();
+        let xDir = Math.round(direction.elements[0]);
+        let zDir = Math.round(direction.elements[2]);
+        let xWall = x - xDir;
+        let zWall = z - zDir;
+
+        if (xWall < 0 || xWall >= g_map.length || zWall < 0 || zWall >= g_map.length || (xWall === x && zWall === z)) {
+            return;
+        }
+
+        // If the grid position is empty, place a wall at hight 0 with the given texture
+        let wall = g_map[zWall][xWall];
+        if (wall === 0) {
+            g_map[zWall][xWall] = 10 + texture;
+        }else{
+        // Otherwise, if the grid position is already a wall, increase the height of the wall
+        // Stacks cannot be of the different textures, so we just increase the height of the wall no matter what
+            g_map[zWall][xWall] += 10;
+        }
+        // If placing a wall results in a collision, remove the wall
+        if (this.colisionCheck(direction)) {
+            g_map[zWall][xWall] = wall;
+        }
+    }
+
+    removeWall() {
+        let xz = this.findGridPosition();
+        let x = xz[0];
+        let z = xz[1];
+
+        // Find the grid position being looked at
+        let direction = this.fetchDirection();
+        let xDir = Math.round(direction.elements[0]);
+        let zDir = Math.round(direction.elements[2]);
+        let xWall = x - xDir;
+        let zWall = z - zDir;
+
+        if (xWall < 0 || xWall >= g_map.length || zWall < 0 || zWall >= g_map.length || (xWall === x && zWall === z)) {
+            return;
+        }
+
+        let wall = g_map[zWall][xWall];
+        if (wall >= 10) {
+            // If the wall is taller than 1, decrease the height of the wall
+            g_map[zWall][xWall] = wall - 10;
+            // If the wall is now 0, remove it
+            if (g_map[zWall][xWall] < 10) {
+                g_map[zWall][xWall] = 0;
+            }
+        }
+
+    }
     
     moveFwdOrBwd(amount) {
         let direction = this.fetchDirection();
