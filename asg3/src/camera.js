@@ -1,8 +1,8 @@
 class Camera{
     constructor(){
-        this.eye = new Vector3([0, 0.8, 3]);
-        this.originalLookat = new Vector3([0, 1, -100]);
-        this.lookat = new Vector3([0, 1, -100]);
+        this.eye = new Vector3([4, 0.8, -24]);
+        this.originalLookat = new Vector3([4, 1, -124]);
+        this.lookat = new Vector3([4, 1, -124]);
         this.up = new Vector3([0, 1, 0]);
         this.pitch = 0;
         this.tilt = 0;
@@ -199,7 +199,7 @@ class Camera{
             // If we have found the player, deal damage
             if (currentI === x && currentJ === z) {
                 console.log("Player hit");
-                damage(10);
+                damage(3);
                 return;
             }
         }
