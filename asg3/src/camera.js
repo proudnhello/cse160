@@ -28,14 +28,44 @@ class Camera{
         direction.normalize();
         return direction;
     }
+
+    findGridPosition() {
+        // Convert the eye position to an index in g_map
+        // 0, 0 is the top left corner of the grid, at 16, 16
+        let x = Math.floor(g_map.length/2 - this.eye.elements[0])
+        let z = Math.floor(g_map.length/2 - this.eye.elements[2]);
+        return [x, z];
+    }
+
+    colisionCheck(direction) {
+        let testDirection = new Vector3();
+        testDirection.set(direction);
+        testDirection.mul(2);
+        let newX = this.eye.elements[0] + testDirection.elements[0];
+        let newZ = this.eye.elements[2] + testDirection.elements[2];
+
+        let x = Math.floor(g_map.length/2 - newX);
+        let z = Math.floor(g_map.length/2 - newZ);
+
+        if (x < 0 || x >= g_map.length || z < 0 || z >= g_map.length || g_map[z][x] !== 0) {
+            return true
+        }
+        return false
+    }
     
     moveFwdOrBwd(amount) {
         let direction = this.fetchDirection();
         direction.elements[1] = 0;
         direction.normalize();
         direction.mul(amount);
-        this.eye.add(direction);
-        this.lookat.add(direction);
+        // Check if we are going to hit a wall
+        let colision = this.colisionCheck(direction);
+        // If we are on the edge of the map, don't move
+        if (!colision) {
+            // Otherwise, check if the direction we are moving in is a wall
+            this.eye.add(direction);
+            this.lookat.add(direction);
+        }
     }
     
     moveLOrR(amount) {
@@ -45,8 +75,16 @@ class Camera{
         let left = Vector3.cross(direction, this.up);
         left.normalize();
         left.mul(amount);
-        this.eye.sub(left);
-        this.lookat.sub(left);
+        // invert the direction b/c we want to move left
+        left.mul(-1);
+        let colision = this.colisionCheck(left);
+        left.mul(-1);
+        // If we are on the edge of the map, don't move
+        if (!colision) {
+            // Otherwise, check if the direction we are moving in is a wall
+            this.eye.sub(left);
+            this.lookat.sub(left);
+        }
     }
     
     rotate(angleX, angleY) {
