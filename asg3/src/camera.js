@@ -1,6 +1,6 @@
 class Camera{
     constructor(){
-        this.eye = new Vector3([0, 1, 3]);
+        this.eye = new Vector3([0, 0.8, 3]);
         this.originalLookat = new Vector3([0, 1, -100]);
         this.lookat = new Vector3([0, 1, -100]);
         this.up = new Vector3([0, 1, 0]);
@@ -47,8 +47,13 @@ class Camera{
         let x = Math.floor(g_map.length/2 - newX);
         let z = Math.floor(g_map.length/2 - newZ);
 
-        if (x < 0 || x >= g_map.length || z < 0 || z >= g_map.length || g_map[z][x] !== 0) {
+        // Can walk thru 6, as those are doors
+        if (x < 0 || x >= g_map.length || z < 0 || z >= g_map.length || (g_map[z][x] !== 0 && g_map[z][x]%10 !== 5 && g_map[z][x]%10 !== 7)) {
             return true
+        }
+        if(g_map[z][x]%10 === 7){
+            g_map[z][x] = 0;
+            heal();
         }
         return false
     }
@@ -88,6 +93,7 @@ class Camera{
         let xz = this.findGridPosition();
         let x = xz[0];
         let z = xz[1];
+        console.log("Player Location", x, z);
 
         // Find the grid position being looked at
         let direction = this.fetchDirection();
@@ -163,6 +169,41 @@ class Camera{
         pitchMatrix.multiply(tiltMatrix);
 
         this.lookat = pitchMatrix.multiplyVector3(this.originalLookat);
+    }
+
+    // Try and deal damage to the player from an enemy at position i, j
+    tryDamage(i, j){
+        let xz = this.findGridPosition();
+        let x = xz[0];
+        let z = xz[1];
+        console.log("Player Location", x, z);
+        console.log("Enemy Location", i, j);
+
+        let currentI = i;
+        let currentJ = j;
+
+        for(let i = 0; i < g_range; i++){
+            // Find the direction from the player, clamped to 1, 0, or -1
+            let xDir = Math.sign(x - currentI);
+            let zDir = Math.sign(z - currentJ);
+            // Move the current i and j in that direction
+            currentI += xDir;
+            currentJ += zDir;
+            console.log("Step " + i, currentI, currentJ);
+            console.log("Current Grid Value", g_map[currentJ][currentI]);
+            // If we are out of bounds or have encounted a wall, stop
+            if (currentI < 0 || currentI >= g_map.length || currentJ < 0 || currentJ >= g_map.length || g_map[currentJ][currentI] !== 0) {
+                console.log("Hit a wall or out of bounds");
+                return;
+            }
+            // If we have found the player, deal damage
+            if (currentI === x && currentJ === z) {
+                console.log("Player hit");
+                damage(10);
+                return;
+            }
+        }
+
     }
 }
 
