@@ -7,6 +7,7 @@ class Camera{
         this.pitch = 0;
         this.tilt = 0;
         console.log(this.eye.elements);
+        this.collide = true
     }
 
     fetchArray(){
@@ -38,6 +39,9 @@ class Camera{
     }
 
     colisionCheck(direction) {
+        if (!this.collide) {
+            return false;
+        }
         let testDirection = new Vector3();
         testDirection.set(direction);
         testDirection.mul(8);
@@ -48,12 +52,22 @@ class Camera{
         let z = Math.floor(g_map.length/2 - newZ);
 
         // Can walk thru 6, as those are doors
-        if (x < 0 || x >= g_map.length || z < 0 || z >= g_map.length || (g_map[z][x] !== 0 && g_map[z][x]%10 !== 5 && g_map[z][x]%10 !== 7)) {
+        if (x < 0 || x >= g_map.length || z < 0 || z >= g_map.length || (g_map[z][x] !== 0 && g_map[z][x]%10 !== 5 && g_map[z][x]%10 !== 7 && g_map[z][x]%10 !== 8)) {
             return true
         }
         if(g_map[z][x]%10 === 7){
             g_map[z][x] = 0;
+            healthPickup.play();
             heal();
+        }
+        console.log(g_map[z][x]);
+        if(g_map[z][x]%10 === 8){
+            this.eye.elements = [0, 20, 0];
+            this.lookat.elements = [0, 20, -100];
+            this.originalLookat.elements = [0, 20, -100];
+            document.getElementById("victory").style.fontSize = "40px";
+            document.getElementById("victory").innerHTML = "You Win!";
+            this.collide = false;
         }
         return false
     }
@@ -86,7 +100,9 @@ class Camera{
         // If placing a wall results in a collision, remove the wall
         if (this.colisionCheck(direction)) {
             g_map[zWall][xWall] = wall;
+            return;
         }
+        placeBlock.play();
     }
 
     removeWall() {
@@ -114,7 +130,18 @@ class Camera{
                 g_map[zWall][xWall] = 0;
             }
         }
-
+        let texture = wall%10;
+        // if it's an enemy, play the sound
+        if(texture === 0){
+            return;
+        }else if(texture === 6){
+            enemyDeath.play();
+        }else if(texture === 7){
+            heal();
+            healthPickup.play();
+        }else{
+            breakWall.play();
+        }
     }
     
     moveFwdOrBwd(amount) {
@@ -191,8 +218,10 @@ class Camera{
                 return;
             }
             // If we have found the player, deal damage
-            if (currentI === x && currentJ === z) {
-                damage(3);
+            if (currentI === x && currentJ === z && this.collide) {
+                playerPain.play();
+                shot.play();
+                damage(5);
                 return;
             }
         }
