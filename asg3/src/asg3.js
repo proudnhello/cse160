@@ -300,12 +300,13 @@ function hexToRgb(hex) {
 
 function addActionsForHtmlUI() {
     document.getElementById("webgl").addEventListener("click", shiftClick);
-    document.getElementById("webgl").addEventListener("mousemove", click);
-    document.getElementById("webgl").addEventListener("mouseup", function(ev) {
+    document.addEventListener("mousemove", click);
+    document.addEventListener("mouseup", function(ev) {
         lastX = -1;
         lastY = -1;
     });23
-    document.onkeydown = keydown;
+    document.addEventListener("keydown", keydown);
+    document.addEventListener("keyup", keyup);
 }
 
 function convertCoordinates(ev) {
@@ -364,6 +365,7 @@ function tick() {
     frameTracker.forEach((frame) => {
         average += frame;
     });
+    handleInput(duration);
     average /= frameTracker.length;
     sendTextToHTML('FPS = ' + Math.floor(1000 / average), 'numdot');
     requestAnimationFrame(tick);
@@ -373,6 +375,7 @@ function tick() {
         g_damageStartTime * 1000.0;
         location.reload();
     }
+    handleInput();
 }
 
 function shiftClick(ev) {
@@ -593,38 +596,52 @@ function renderMap() {
         damageTime = 0;
     }
 }
-
+    
+// Help with multiple key presses from https://www.gavsblog.com/blog/detect-single-and-multiple-keypress-events-javascript
+let keysPressed = {};
 function keydown(ev) {
-    if(ev.key == 'w') {
+    keysPressed[ev.key] = true;
+    if(ev.key === ' ') {
+        cam.removeWall();
+    }
+}
+
+function keyup(ev) {
+    keysPressed[ev.key] = false;
+}
+
+function handleInput(duration){
+    if(!duration){
+        return
+    }
+    let g_moveStep = 0.005 * duration;
+    console.log(duration)
+    if(keysPressed['w']) {
         cam.moveFwdOrBwd(g_moveStep);
     }
-    if(ev.key == 's') {
+    if(keysPressed['s']) {
         cam.moveFwdOrBwd(-g_moveStep);
     }
-    if(ev.key == 'a') {
+    if(keysPressed['a']) {
         cam.moveLOrR(g_moveStep);
     }
-    if(ev.key == 'd') {
+    if(keysPressed['d']) {
         cam.moveLOrR(-g_moveStep);
     }
-    if(ev.key == 'q') {
+    if(keysPressed['q']) {
         cam.rotate(-g_moveStep * 100, 0);
     }
-    if(ev.key == 'e') {
+    if(keysPressed['e']) {
         cam.rotate(g_moveStep * 100, 0);
     }
 
     let j = 0;
     for(let i = 49; i < 49 + g_textureNumber; i++) {
-        if(ev.key == String.fromCharCode(i)) {
+        if(keysPressed[String.fromCharCode(i)]) {
             console.log('Placing wall with texture ' + j);
             cam.placeWall(j);
         }
         j++;
-    }
-
-    if(ev.key == ' ') {
-        cam.removeWall();
     }
 }
 

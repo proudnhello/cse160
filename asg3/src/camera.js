@@ -40,7 +40,7 @@ class Camera{
     colisionCheck(direction) {
         let testDirection = new Vector3();
         testDirection.set(direction);
-        testDirection.mul(2);
+        testDirection.mul(8);
         let newX = this.eye.elements[0] + testDirection.elements[0];
         let newZ = this.eye.elements[2] + testDirection.elements[2];
 
@@ -93,7 +93,6 @@ class Camera{
         let xz = this.findGridPosition();
         let x = xz[0];
         let z = xz[1];
-        console.log("Player Location", x, z);
 
         // Find the grid position being looked at
         let direction = this.fetchDirection();
@@ -176,8 +175,6 @@ class Camera{
         let xz = this.findGridPosition();
         let x = xz[0];
         let z = xz[1];
-        console.log("Player Location", x, z);
-        console.log("Enemy Location", i, j);
 
         let currentI = i;
         let currentJ = j;
@@ -189,16 +186,12 @@ class Camera{
             // Move the current i and j in that direction
             currentI += xDir;
             currentJ += zDir;
-            console.log("Step " + i, currentI, currentJ);
-            console.log("Current Grid Value", g_map[currentJ][currentI]);
             // If we are out of bounds or have encounted a wall, stop
             if (currentI < 0 || currentI >= g_map.length || currentJ < 0 || currentJ >= g_map.length || g_map[currentJ][currentI] !== 0) {
-                console.log("Hit a wall or out of bounds");
                 return;
             }
             // If we have found the player, deal damage
             if (currentI === x && currentJ === z) {
-                console.log("Player hit");
                 damage(3);
                 return;
             }
