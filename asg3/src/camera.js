@@ -1,8 +1,8 @@
 class Camera{
     constructor(){
-        this.eye = new Vector3([0, 0, 3]);
-        this.originalLookat = new Vector3([0, 0, -100]);
-        this.lookat = new Vector3([0, 0, -100]);
+        this.eye = new Vector3([0, 1, 3]);
+        this.originalLookat = new Vector3([0, 1, -100]);
+        this.lookat = new Vector3([0, 1, -100]);
         this.up = new Vector3([0, 1, 0]);
         this.pitch = 0;
         this.tilt = 0;

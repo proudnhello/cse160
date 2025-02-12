@@ -21,7 +21,8 @@ let VSHADER_SOURCE =
 let FSHADER_SOURCE =
     `precision mediump float;
     uniform vec4 u_FragColor;
-    uniform sampler2D u_Sampler0;
+    uniform sampler2D u_Sampler0; // Sky image
+    uniform sampler2D u_Sampler1; // Coordiate plane
     varying vec2 v_UV;
     uniform int u_whichtexture;
     void main() {
@@ -34,6 +35,8 @@ let FSHADER_SOURCE =
         // Use texture 0
         } else if (u_whichtexture == 0) {
             gl_FragColor = texture2D(u_Sampler0, v_UV);
+        }else if (u_whichtexture == 1) {
+            gl_FragColor = texture2D(u_Sampler1, v_UV);   
         // Use error purple
         }else{
             gl_FragColor = vec4(1.0, 0, 0.87, 1.0);
@@ -53,6 +56,7 @@ let u_ModelMatrix;
 let a_UV;
 let v_UV;
 let u_Sampler0;
+let u_Sampler1;
 let u_whichtexture;
 let g_selectedColor = [1.0, 1.0, 1.0, 1.0];
 let u_selectedSize = 10;
@@ -139,6 +143,13 @@ function connectVariablesToGLSL() {
         return;
     }
 
+    // Get the storage location of the sampler
+    u_Sampler1 = gl.getUniformLocation(gl.program, 'u_Sampler1');
+    if (!u_Sampler1) {
+        console.log('Failed to get the storage location of u_Sampler1');
+        return;
+    }
+
     // Get the storage location of the which texture variable
     u_whichtexture = gl.getUniformLocation(gl.program, 'u_whichtexture');
     if (!u_whichtexture) {
@@ -166,21 +177,22 @@ function connectVariablesToGLSL() {
     gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, identityM.elements);
 }
 
-function initTextures() {
+function initTextures(src, sampler, textureNum) {
     var image = new Image();  // Create the image object
     if (!image) {
       console.log('Failed to create the image object');
       return false;
     }
     // Register the event handler to be called on loading an image
-    image.onload = function(){ sendTextureToShader(image); };
+    image.onload = function(){ sendTextureToShader(image, sampler, textureNum); };
     // Tell the browser to load an image
-    image.src = '../resources/sky.jpg';
+    console.log(src);
+    image.src = src;
   
     return true;
   }
   
-  function sendTextureToShader(image) {
+  function sendTextureToShader(image, sampler, textureNum) {
     var texture = gl.createTexture();   // Create a texture object
     if (!texture) {
       console.log('Failed to create the texture object');
@@ -188,8 +200,9 @@ function initTextures() {
     }
 
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // Flip the image's y axis
-    // Enable texture unit0
-    gl.activeTexture(gl.TEXTURE0);
+    // Enable texture textureNum
+    // This line was created by chatgpt when asked I could convert the original code to accept textureNum as an argument
+    gl.activeTexture(gl['TEXTURE' + textureNum]);
     // Bind the texture object to the target
     gl.bindTexture(gl.TEXTURE_2D, texture);
   
@@ -199,7 +212,7 @@ function initTextures() {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
     
     // Set the texture unit 0 to the sampler
-    gl.uniform1i(u_Sampler0, 0);
+    gl.uniform1i(sampler, textureNum);
   }
   
 
@@ -246,7 +259,8 @@ function main() {
 
     connectVariablesToGLSL();
 
-    initTextures(gl, 0);
+    initTextures('../resources/walls.png', u_Sampler0, 0);
+    initTextures('../resources/coordiatePlane.png', u_Sampler1, 1);
 
     addActionsForHtmlUI();
 
@@ -308,16 +322,87 @@ function renderAllShapes() {
     viewMatrix.setLookAt(viewArray[0], viewArray[1], viewArray[2], viewArray[3], viewArray[4], viewArray[5], viewArray[6], viewArray[7], viewArray[8]);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
-    // Define the rotation matrix
-    let globalRotateMatrix = new Matrix4();
-    globalRotateMatrix.rotate(g_globalYAngle, 0, 1, 0);
-    globalRotateMatrix.rotate(g_globalXAngle, 1, 0, 0);
-    gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotateMatrix.elements);
+    let floor = new Cube();
+    floor.matrix = new Matrix4();
+    floor.textureNum = -2;
+    floor.color = [0.7, 0.7, 0.7, 1];
+    floor.matrix.translate(-16, 0, -16);
+    floor.matrix.scale(32, 0, 32);
+    floor.render();
 
-    let textureTest = new Cube();
-    textureTest.textureNum = 0;
-    textureTest.matrix = new Matrix4(globalRotateMatrix);
-    textureTest.render();
+    let skyBox = new Cube();
+    skyBox.matrix = new Matrix4();
+    skyBox.textureNum = -2;
+    skyBox.color = [0.52, 0.8, 0.92, 1];
+    skyBox.colorReduction = 0;
+    skyBox.matrix.translate(-50, -50, -50);
+    skyBox.matrix.scale(100, 100, 100);
+    skyBox.render();
+
+    renderMap();
+}
+
+// The map is 32x32, and defines both the texture and the height of every pillar
+// The first digit is the height, the second digit is the texture
+// So, 10 is a wall with a height of 1 with texture 1, 22 is a wall with a height of 2, with texture 2.
+// This limits the height of the walls to 9, and the number textures to 9, but that should be fine for this project - webgl only supports 16 textures anyway
+let g_map = [
+    [90, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 10],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 10, 10, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 10, 10, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
+    [10, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 10],
+];
+
+function renderMap() {
+    for (let i = 0; i < g_map.length; i++) {
+        for (let j = 0; j < g_map[i].length; j++) {
+            // If the value is 0, then there is no wall, so we skip it
+            if(g_map[i][j] === 0) {
+                continue;
+            }
+            // The texture number is the last digit of the number, and the height is the first digit, so we can get them by dividing and getting the remainder
+            let textureNum = g_map[i][j] % 10;
+            let height = Math.floor(g_map[i][j] / 10);
+            for(let k = 0; k < height; k++) {
+                let wall = new Cube();
+                wall.matrix = new Matrix4();
+                wall.textureNum = textureNum;
+                let x = g_map.length/2 - j - 1;
+                let y = k;
+                let z = g_map[0].length/2 - i - 1;
+                wall.matrix.translate(x, k, z);
+                wall.render();
+            }
+        }
+    }
 }
 
 function keydown(ev) {
