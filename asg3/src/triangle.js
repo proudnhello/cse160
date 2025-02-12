@@ -103,8 +103,8 @@ function drawTriangle3D(vertices) {
 
 // I bet I could interleave the vertices and uv coordinates in the same buffer
 // Performance enhancement maybe? ill do it if/when i need to
-function drawTriangle3DUV(vertices, uv) {
-    var n = 3; // The number of vertices
+function drawTriangle3DUV(vertices) {
+    var n = vertices.length/5; // The number of vertices
 
     // Create a buffer object
     var vertexBuffer = gl.createBuffer();
@@ -113,35 +113,21 @@ function drawTriangle3DUV(vertices, uv) {
         return -1;
     }
 
+    let bufferVerts = new Float32Array(vertices)
     // Bind the buffer object to target
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     // Write data into the buffer object
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, bufferVerts, gl.DYNAMIC_DRAW);
 
+    var FSIZE = bufferVerts.BYTES_PER_ELEMENT;
     // Assign the buffer object to a_Position variable
-    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 5, 0);
 
     // Enable the assignment to a_Position variable
     gl.enableVertexAttribArray(a_Position);
 
-    gl.drawArrays(gl.TRIANGLES, 0, n);
-
-    // Create a buffer object
-    var uvBuffer = gl.createBuffer();
-    if (!uvBuffer) {
-        console.log('Failed to create the buffer object');
-        return -1;
-    }
-
-    // Bind the buffer object to target
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    // Write data into the buffer object
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uv), gl.DYNAMIC_DRAW);
-
     // Assign the buffer object to a_Position variable
-    gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, 0, 0);
-
-    // Enable the assignment to a_Position variable
+    gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, FSIZE * 5, FSIZE * 3);
     gl.enableVertexAttribArray(a_UV);
 
     gl.drawArrays(gl.TRIANGLES, 0, n);

@@ -328,16 +328,15 @@ function renderAllShapes() {
     floor.color = [0.7, 0.7, 0.7, 1];
     floor.matrix.translate(-16, 0, -16);
     floor.matrix.scale(32, 0, 32);
-    floor.render();
+    floor.fastRender();
 
     let skyBox = new Cube();
     skyBox.matrix = new Matrix4();
     skyBox.textureNum = -2;
     skyBox.color = [0.52, 0.8, 0.92, 1];
-    skyBox.colorReduction = 0;
     skyBox.matrix.translate(-50, -50, -50);
     skyBox.matrix.scale(100, 100, 100);
-    skyBox.render();
+    skyBox.fastRender();
 
     renderMap();
 }
@@ -345,9 +344,9 @@ function renderAllShapes() {
 // The map is 32x32, and defines both the texture and the height of every pillar
 // The first digit is the height, the second digit is the texture
 // So, 10 is a wall with a height of 1 with texture 1, 22 is a wall with a height of 2, with texture 2.
-// This limits the height of the walls to 9, and the number textures to 9, but that should be fine for this project - webgl only supports 16 textures anyway
+// This limits the height of the walls to 9, and the number textures to 9, but that should be fine for this project - webgl only supports 8 textures anyway
 let g_map = [
-    [90, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 10],
+    [10, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 10],
     [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
     [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
     [00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00],
@@ -382,15 +381,24 @@ let g_map = [
 ];
 
 function renderMap() {
+    let wall = new Cube();
+    wall.matrix = new Matrix4();
+    wall.textureNum = 0;
+    let x = 0;
+    let y = 0;
+    let z = 0;
+    wall.matrix.translate(x, y, z);
+    wall.fastRender();
     for (let i = 0; i < g_map.length; i++) {
         for (let j = 0; j < g_map[i].length; j++) {
             // If the value is 0, then there is no wall, so we skip it
-            if(g_map[i][j] === 0) {
-                continue;
-            }
+            // if(g_map[i][j] === 0) {
+            //     continue;
+            // }
             // The texture number is the last digit of the number, and the height is the first digit, so we can get them by dividing and getting the remainder
             let textureNum = g_map[i][j] % 10;
             let height = Math.floor(g_map[i][j] / 10);
+            height = 9
             for(let k = 0; k < height; k++) {
                 let wall = new Cube();
                 wall.matrix = new Matrix4();
@@ -399,7 +407,7 @@ function renderMap() {
                 let y = k;
                 let z = g_map[0].length/2 - i - 1;
                 wall.matrix.translate(x, k, z);
-                wall.render();
+                wall.fastRender();
             }
         }
     }
