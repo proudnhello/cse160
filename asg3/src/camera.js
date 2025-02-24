@@ -44,7 +44,8 @@ class Camera{
         }
         let testDirection = new Vector3();
         testDirection.set(direction);
-        testDirection.mul(8);
+        testDirection.normalize();
+        testDirection.mul(0.5);
         let newX = this.eye.elements[0] + testDirection.elements[0];
         let newZ = this.eye.elements[2] + testDirection.elements[2];
 
