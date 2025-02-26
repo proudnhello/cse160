@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Scuffedenstein</title>
+  </head>
+
+  <body onload="main()">
+    <canvas id="webgl" width="1600" height="800">
+    Please use a browser that supports "canvas"
+    </canvas>
+
+    <p id="victory"></p>
+    <button id="normalOn">Normal On</button>
+    <button id="normalOff">Normal Off</button>
+    <br>
+    <button id="animatedOn">Animations On</button>
+    <button id="animatedOff">Animations Off</button>
+    <br>
+    Light X: <input type="range" id="lightX" min="-10" max="10" value="0" step="0.1">
+    Y: <input type="range" id="lightY" min="-10" max="10" value="0" step="0.1">
+    Z: <input type="range" id="lightZ" min="-10" max="10" value="0" step="0.1">
+    <br>
+    Floating Light (Diffuse and Specular) R: <input type="range" id="colorR" min="0" max="1" value="1" step="0.01">
+    G: <input type="range" id="colorG" min="0" max="1" value="1" step="0.01">
+    B: <input type="range" id="colorB" min="0" max="1" value="1" step="0.01">
+    <br>
+    Ambient Lighting R: <input type="range" id="ambientR" min="0" max="1" value="0.3" step="0.01">
+    G: <input type="range" id="ambientG" min="0" max="1" value="0.3" step="0.01">
+    B: <input type="range" id="ambientB" min="0" max="1" value="0.3" step="0.01">
+    <br>
+    <p id="numdot">
+      FPS = 0
+    </p>
+    
+    <p id="health">
+      Health = 100
+    </p>
+
+    <p>
+      A scuffed version of E1M1 of Wolfenstein 3D, created with webgl. <br>
+      WASD to move, Q and E or click dragging the mouse to rotate the camera <br>
+      Press space to destory the enemy (or wall, if you're feeling unsportmanlike) in front of you <br>
+      Press 1-8 to place down walls in front of you, or make the stack of walls in front of you one higher <br>
+    </p>
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="asg4.js"></script>
+    <script src="triangle.js"></script>
+    <script src="circle.js"></script>
+    <script src="cube.js"></script>
+    <script src="cylinder.js"></script>
+    <script src="points.js"></script>
+    <script src="camera.js"></script>
+    <script src="sphere.js"></script>
+  </body>
+</html>
