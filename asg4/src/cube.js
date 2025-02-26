@@ -13,6 +13,7 @@ class Cube{
         }
         this.textureNum = -3; // By default, use error purple
         this.colorReduction = 0.1;
+        this.skybox = false;
 
         // Precomputed vertices for the cube
         // In the format of [x,y,z, u,v, nx,ny,nz,  next point], with each triangle defined on a new line, and n is the normal
@@ -41,7 +42,11 @@ class Cube{
 
         gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
 
-        this.normalMatrix.setInverseOf(this.matrix).transpose();
+        if(!this.skybox){
+            this.normalMatrix.setInverseOf(this.matrix).transpose();
+        }else{
+            this.normalMatrix.setIdentity();
+        }
         gl.uniformMatrix4fv(u_NormalMatrix, false, this.normalMatrix.elements);
 
         drawTriangle3DUVNormal(this.cubeVerts);

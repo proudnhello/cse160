@@ -19,6 +19,11 @@ let VSHADER_SOURCE =
     uniform vec3 u_AmbientLightColor;
     uniform bool u_lighting;
     uniform bool u_PointLight;
+    uniform bool u_spotLight;
+    uniform vec3 u_spotLightPosition;
+    uniform vec3 u_spotLightDirection;
+    uniform vec3 u_spotLightColor;
+    uniform float u_cutOffAngle;
     attribute vec2 a_UV;
     attribute vec3 a_Normal;
     varying vec2 v_UV;
@@ -51,6 +56,11 @@ let FSHADER_SOURCE =
     uniform vec3 u_cameraPosition;
     uniform vec3 u_DiffuseLightColor;
     uniform vec3 u_AmbientLightColor;
+    uniform bool u_spotLight;
+    uniform vec3 u_spotLightPosition;
+    uniform vec3 u_spotLightDirection;
+    uniform vec3 u_spotLightColor;
+    uniform float u_cutOffAngle;
     varying vec2 v_UV;
     varying vec3 v_Normal;
     varying vec4 v_Position;
@@ -91,6 +101,29 @@ let FSHADER_SOURCE =
         vec3 diffuse = vec3(0.0, 0.0, 0.0);
         vec3 ambient = vec3(0.0, 0.0, 0.0);
 
+        // Referenced OpenGL ES 2.0 Programming Guide Chapter 8 for help with spotlights
+        // (The textbook said spotlights were not covered, but they were in the OpenGL ES 2.0 Programming Guide, so I used that)
+        // If the spot light is on, calculate the diffuse and specular reflections
+        if(u_spotLight){
+            vec3 lightVector = u_spotLightPosition - vec3(v_Position);
+            float distance = length(lightVector);
+            float angle = acos(dot(-normalize(lightVector), normalize(u_spotLightDirection)));
+            
+            // If the point is within the cutoff angle, calculate the diffuse and specular reflections
+            if(abs(angle) < u_cutOffAngle){
+                vec3 L = normalize(lightVector);
+                vec3 N = normalize(v_Normal);
+                float nDotL = max(dot(N, L), 0.0);
+                diffuse += u_spotLightColor * vec3(gl_FragColor) * nDotL;
+                
+                // Calculate specular reflection
+                vec3 R = reflect(-L, N);
+                vec3 E = normalize(u_cameraPosition - vec3(v_Position));
+                float s = pow(max(dot(R, E), 0.0), 50.0);
+                specular += u_spotLightColor * s;
+            }
+        }
+
         // If the point light is on, calculate the diffuse and specular reflections
         if(u_PointLight){
             vec3 lightVector = u_LightPosition - vec3(v_Position);
@@ -100,13 +133,13 @@ let FSHADER_SOURCE =
             vec3 L = normalize(lightVector);
             vec3 N = normalize(v_Normal);
             float nDotL = max(dot(N, L), 0.0);
-            diffuse = u_DiffuseLightColor * vec3(gl_FragColor) * nDotL;
+            diffuse += u_DiffuseLightColor * vec3(gl_FragColor) * nDotL;
 
             // Calculate specular reflection
             vec3 R = reflect(-L, N);
             vec3 E = normalize(u_cameraPosition - vec3(v_Position));
             float s = pow(max(dot(R, E), 0.0), 50.0);
-            specular = u_DiffuseLightColor * s;
+            specular += u_DiffuseLightColor * s;
         }
 
         if(u_lighting){
@@ -114,7 +147,7 @@ let FSHADER_SOURCE =
             ambient = u_AmbientLightColor * vec3(gl_FragColor);
         }
 
-        if(u_lighting || u_PointLight){
+        if(u_lighting || u_PointLight || u_spotLight){
             gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
         }
     }`;
@@ -144,6 +177,9 @@ let u_Sampler7;
 let u_NormalMatrix;
 let u_DiffuseLightColor;
 let u_AmbientLightColor;
+let u_spotLightPosition;
+let u_spotLightDirection;
+let u_cutOffAngle;
 let g_health = 100;
 let u_whichtexture;
 let u_selectedSize = 10;
@@ -163,6 +199,7 @@ let g_initialLight = [-0.5, 1.2, -24.0];
 let g_lightModifier = [0, 0, 0];
 let g_DiffuseLightColor = [1.0, 1.0, 1.0];
 let g_AmbientLightColor = [0.3, 0.3, 0.3];
+let g_SpotlightColor = [0.5, 0.5, 0.5];
 
 let u_cameraPosition;
 
@@ -360,6 +397,42 @@ function connectVariablesToGLSL() {
     }
     gl.uniform1i(u_PointLight, true);
 
+    // Get the storage location of the spot light boolean
+    u_spotLight = gl.getUniformLocation(gl.program, 'u_spotLight');
+    if (!u_spotLight) {
+        console.log('Failed to get the storage location of u_spotLight');
+        return;
+    }
+    gl.uniform1i(u_spotLight, true);
+
+    // Get the storage location of the spot light position
+    u_spotLightPosition = gl.getUniformLocation(gl.program, 'u_spotLightPosition');
+    if (!u_spotLightPosition) {
+        console.log('Failed to get the storage location of u_spotLightPosition');
+        return;
+    }
+
+    // Get the storage location of the spot light direction
+    u_spotLightDirection = gl.getUniformLocation(gl.program, 'u_spotLightDirection');
+    if (!u_spotLightDirection) {
+        console.log('Failed to get the storage location of u_spotLightDirection');
+        return;
+    }
+
+    // Get the storage location of the spot light color
+    u_spotLightColor = gl.getUniformLocation(gl.program, 'u_spotLightColor');
+    if (!u_spotLightColor) {
+        console.log('Failed to get the storage location of u_spotLightColor');
+        return;
+    }
+
+    // Get the storage location of the spot light cutoff angle
+    u_cutOffAngle = gl.getUniformLocation(gl.program, 'u_cutOffAngle');
+    if (!u_cutOffAngle) {
+        console.log('Failed to get the storage location of u_cutOffAngle');
+        return;
+    }
+
     let identityM = new Matrix4();
     gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
     identityM = new Matrix4();
@@ -450,11 +523,18 @@ function addActionsForHtmlUI() {
     document.getElementById('ambientG').addEventListener('input', function() {g_AmbientLightColor[1] = parseFloat(document.getElementById('ambientG').value)});
     document.getElementById('ambientB').addEventListener('input', function() {g_AmbientLightColor[2] = parseFloat(document.getElementById('ambientB').value)});
 
+    document.getElementById('spotlightR').addEventListener('input', function() {g_SpotlightColor[0] = parseFloat(document.getElementById('spotlightR').value)});
+    document.getElementById('spotlightG').addEventListener('input', function() {g_SpotlightColor[1] = parseFloat(document.getElementById('spotlightG').value)});
+    document.getElementById('spotlightB').addEventListener('input', function() {g_SpotlightColor[2] = parseFloat(document.getElementById('spotlightB').value)});
+
     document.getElementById('lightingOn').addEventListener('click', function() {gl.uniform1i(u_lighting, true);});
     document.getElementById('lightingOff').addEventListener('click', function() {gl.uniform1i(u_lighting, false);});
 
     document.getElementById('pointLightOn').addEventListener('click', function() {gl.uniform1i(u_PointLight, true);});
     document.getElementById('pointLightOff').addEventListener('click', function() {gl.uniform1i(u_PointLight, false);});
+
+    document.getElementById('spotlightOn').addEventListener('click', function() {gl.uniform1i(u_spotLight, true);});
+    document.getElementById('spotlightOff').addEventListener('click', function() {gl.uniform1i(u_spotLight, false);});
 }
 
 function convertCoordinates(ev) {
@@ -603,6 +683,7 @@ function renderAllShapes() {
 
     let skyBox = new Cube();
     skyBox.matrix = new Matrix4();
+    skyBox.skybox = true;
     if(g_normal){
         skyBox.textureNum = -3;
     }else{
@@ -627,13 +708,33 @@ function renderAllShapes() {
 
     let light = new Cube();
     light.matrix = new Matrix4();
-    light.textureNum = -2;
+    if(g_normal){
+        light.textureNum = -3;
+    }else{
+        light.textureNum = -2;
+    }    
     light.color = [1, 1, 0, 1];
     console.log(g_initialLight[0] + g_lightModifier[0]);
     light.matrix.translate(g_initialLight[0] + g_lightModifier[0], g_initialLight[1] + g_lightModifier[1], g_initialLight[2] + g_lightModifier[2]);
     light.matrix.scale(-0.1, -0.1, -0.1);
     light.fastRender();
     gl.uniform3f(u_LightPosition, g_initialLight[0] + g_lightModifier[0], g_initialLight[1] + g_lightModifier[1], g_initialLight[2] + g_lightModifier[2]);
+
+    let spotLight = new Cube();
+    spotLight.matrix = new Matrix4();
+    if(g_normal){
+        spotLight.textureNum = -3;
+    }else{
+        spotLight.textureNum = -2;
+    }    
+    spotLight.color = [1, 1, 0, 1];
+    spotLight.matrix.translate(-0.5, 2, -24);
+    spotLight.matrix.scale(-0.1, -0.1, -0.1);
+    spotLight.fastRender();
+    gl.uniform3f(u_spotLightPosition, -0.5, 2, -24);
+    gl.uniform3f(u_spotLightDirection, 0, -1, 0);
+    gl.uniform1f(u_cutOffAngle, 0.5);
+    gl.uniform3f(u_spotLightColor, g_SpotlightColor[0], g_SpotlightColor[1], g_SpotlightColor[2]);
 
     if(g_healing){
         let heal = new Cube();
