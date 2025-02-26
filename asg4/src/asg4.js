@@ -17,6 +17,8 @@ let VSHADER_SOURCE =
     uniform mat4 u_NormalMatrix;
     uniform vec3 u_DiffuseLightColor;
     uniform vec3 u_AmbientLightColor;
+    uniform bool u_lighting;
+    uniform bool u_PointLight;
     attribute vec2 a_UV;
     attribute vec3 a_Normal;
     varying vec2 v_UV;
@@ -43,6 +45,8 @@ let FSHADER_SOURCE =
     uniform sampler2D u_Sampler5;
     uniform sampler2D u_Sampler6;
     uniform sampler2D u_Sampler7;
+    uniform bool u_lighting;
+    uniform bool u_PointLight;
     uniform vec3 u_LightPosition;
     uniform vec3 u_cameraPosition;
     uniform vec3 u_DiffuseLightColor;
@@ -82,25 +86,37 @@ let FSHADER_SOURCE =
             gl_FragColor = vec4(1.0, 0, 0.87, 1.0);
         }
 
-        vec3 lightVector = u_LightPosition - vec3(v_Position);
-        float distance = length(lightVector);
 
-        // Calculate diffuse reflection
-        vec3 L = normalize(lightVector);
-        vec3 N = normalize(v_Normal);
-        float nDotL = max(dot(N, L), 0.0);
-        vec3 diffuse = u_DiffuseLightColor * vec3(gl_FragColor) * nDotL;
+        vec3 specular = vec3(0.0, 0.0, 0.0);
+        vec3 diffuse = vec3(0.0, 0.0, 0.0);
+        vec3 ambient = vec3(0.0, 0.0, 0.0);
 
-        // Calculate specular reflection
-        vec3 R = reflect(-L, N);
-        vec3 E = normalize(u_cameraPosition - vec3(v_Position));
-        float s = pow(max(dot(R, E), 0.0), 50.0);
-        vec3 specular = u_DiffuseLightColor * s;
+        // If the point light is on, calculate the diffuse and specular reflections
+        if(u_PointLight){
+            vec3 lightVector = u_LightPosition - vec3(v_Position);
+            float distance = length(lightVector);
 
-        // Calculate ambient reflection (such difficulty)
-        vec3 ambient = u_AmbientLightColor * vec3(gl_FragColor);
+            // Calculate diffuse reflection
+            vec3 L = normalize(lightVector);
+            vec3 N = normalize(v_Normal);
+            float nDotL = max(dot(N, L), 0.0);
+            diffuse = u_DiffuseLightColor * vec3(gl_FragColor) * nDotL;
 
-        gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
+            // Calculate specular reflection
+            vec3 R = reflect(-L, N);
+            vec3 E = normalize(u_cameraPosition - vec3(v_Position));
+            float s = pow(max(dot(R, E), 0.0), 50.0);
+            specular = u_DiffuseLightColor * s;
+        }
+
+        if(u_lighting){
+            // Calculate ambient reflection (such difficulty)
+            ambient = u_AmbientLightColor * vec3(gl_FragColor);
+        }
+
+        if(u_lighting || u_PointLight){
+            gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
+        }
     }`;
 
 const POINT = 0;
@@ -328,6 +344,22 @@ function connectVariablesToGLSL() {
         return;
     }
 
+    // Get the storage location of the lighting boolean
+    u_lighting = gl.getUniformLocation(gl.program, 'u_lighting');
+    if (!u_lighting) {
+        console.log('Failed to get the storage location of u_lighting');
+        return;
+    }
+    gl.uniform1i(u_lighting, true);
+
+    // Get the storage location of the point light boolean
+    u_PointLight = gl.getUniformLocation(gl.program, 'u_PointLight');
+    if (!u_PointLight) {
+        console.log('Failed to get the storage location of u_PointLight');
+        return;
+    }
+    gl.uniform1i(u_PointLight, true);
+
     let identityM = new Matrix4();
     gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
     identityM = new Matrix4();
@@ -417,6 +449,12 @@ function addActionsForHtmlUI() {
     document.getElementById('ambientR').addEventListener('input', function() {g_AmbientLightColor[0] = parseFloat(document.getElementById('ambientR').value)});
     document.getElementById('ambientG').addEventListener('input', function() {g_AmbientLightColor[1] = parseFloat(document.getElementById('ambientG').value)});
     document.getElementById('ambientB').addEventListener('input', function() {g_AmbientLightColor[2] = parseFloat(document.getElementById('ambientB').value)});
+
+    document.getElementById('lightingOn').addEventListener('click', function() {gl.uniform1i(u_lighting, true);});
+    document.getElementById('lightingOff').addEventListener('click', function() {gl.uniform1i(u_lighting, false);});
+
+    document.getElementById('pointLightOn').addEventListener('click', function() {gl.uniform1i(u_PointLight, true);});
+    document.getElementById('pointLightOff').addEventListener('click', function() {gl.uniform1i(u_PointLight, false);});
 }
 
 function convertCoordinates(ev) {
