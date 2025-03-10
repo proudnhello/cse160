@@ -6,11 +6,14 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+let camera2 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const objLoader = new OBJLoader();
 const mtlLoader = new MTLLoader();
+let renderer = new THREE.WebGLRenderer();
 let controls;
 let speed = 0.05;
-
+let whichCam = 0;
+let backgroundColor = 0x808080;
 
 class MinMaxGUIHelper {
     constructor(obj, minProp, maxProp, minDif) {
@@ -39,9 +42,19 @@ function main() {
     document.getElementById('speed').addEventListener('input', (e) => {
         speed = e.target.value;
     });
+    document.getElementById('camSwap').onclick = (() => {
+        console.log("clicked");
+        if(whichCam === 0){
+            whichCam = 1;
+        }
+        else{
+            whichCam = 0;
+        }
+    });
     const canvas = document.getElementById('c');
-    const renderer = new THREE.WebGLRenderer({canvas});
+    renderer = new THREE.WebGLRenderer({canvas});
 
+    // Set up rotating camera
     const fov = 45;
     const aspect = 2; 
     const near = 0.1;
@@ -50,11 +63,20 @@ function main() {
     camera.position.z = 20;
     camera.position.y = 10;
 
+    // Set up POV camera
+    const fov2 = 45;
+    const aspect2 = 2;
+    const near2 = 0.1;
+    const far2 = 100;
+    camera2 = new THREE.PerspectiveCamera(fov2, aspect2, near2, far2);
+    // Location of the camera will be set in the render function, as it will follow the car
+
     controls = new OrbitControls(camera, canvas);
     controls.target.set(0, 1, 0);
     controls.update();
 
     scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(backgroundColor, 5, 50);
 
     const boxWidth = 1;
     const boxHeight = 1;
@@ -77,16 +99,7 @@ function main() {
     scene.add(directionalLight);
 
     // Skybox
-    const cubeLoader = new THREE.CubeTextureLoader();
-    const skyTexture = cubeLoader.load([
-        './resources/Skybox/front.jpg',
-        './resources/Skybox/back.jpg',
-        './resources/Skybox/sky.jpg',
-        './resources/Skybox/ground.jpg',
-        './resources/Skybox/right.jpg',
-        './resources/Skybox/left.jpg',
-    ]);
-    scene.background = skyTexture;
+    scene.background = new THREE.Color(backgroundColor);
 
     const planeSize = 100;
  
@@ -140,19 +153,7 @@ function main() {
         leftLamp.setPosition(i, 0, -roadWidth / 2 - sideWalkWidth / 2);
         leftLamp.setScale(1, 1, 1);
     }
-
-    // Soldier
-    mtlLoader.load('../resources/Soldier/FREEScene.mtl', function (materials) {
-        materials.preload();
-        objLoader.setMaterials(materials);
-        objLoader.load('../resources/Soldier/FREEScene.obj', function (object) {
-            object.position.set(0.5, 0.2, -roadWidth / 2 - sideWalkWidth / 2);
-            scene.add(object);
-      } );
-    });
   
-    // Streetlamps
-
     let lastStep = undefined;
     let position = 0;
     function render(time) {
@@ -169,7 +170,14 @@ function main() {
 
         car.setPosition(position, 2.3, roadWidth / 3.5);
 
-        renderer.render(scene, camera);
+        if(whichCam === 0){
+            renderer.render(scene, camera);
+        }else{
+            console.log(position);
+            camera2.position.set(position + 2, 2.5, (roadWidth / 3.5));
+            camera2.lookAt(position + 3, 2.5, roadWidth / 3.5);
+            renderer.render(scene, camera2);
+        }
 
         requestAnimationFrame(render);
     }
@@ -218,10 +226,6 @@ class Car{
         this.car.add(wheelBackLeft);
         this.car.add(wheelBackRight);
 
-        // Windshield
-        const windshield = coloredCube(0x000000, [0.01, 0.25, 1], [0.5, 0.125, 0]);
-        this.car.add(windshield);
-
         // Headlights
         const headlightLeft = coloredSphere(0xFFFFFF, 0.05, [1.0, -0.25, 0.3]);
         const headlightRight = coloredSphere(0xFFFFFF, 0.05, [1.0, -0.25, -0.3]);
@@ -252,8 +256,46 @@ class Car{
 
         this.car.add(leftSpotlight);
         this.car.add(rightSpotlight);
+        
+        // Make the windshield reflect a scene with the car color background with the soldier model's face in it
+        const width = 256;
+        const height = 1024;
+        const renderTarget = new THREE.WebGLRenderTarget(width, height);
+        const renderTargetCamera = new THREE.PerspectiveCamera(30, height / width, 0.1, 1000);
+        renderTargetCamera.position.set(0, 0, 3);
+        renderTargetCamera.lookAt(0, 0, 0);
+        const renderTargetScene = new THREE.Scene();
+        renderTargetScene.background = new THREE.Color(0x004225);
+        mtlLoader.load('../resources/Soldier/FREEScene.mtl', function (materials) {
+            materials.preload();
+            objLoader.setMaterials(materials);
+            objLoader.load('../resources/Soldier/FREEScene.obj', function (object) {
+                object.position.set(-1.5,-6.5,0);
+                object.rotation.set(0, Math.PI/10, 0);
+                object.scale.set(4,4,4);
+                renderTargetScene.add(object);
+                renderer.setRenderTarget(renderTarget);
+                renderer.render(renderTargetScene, renderTargetCamera);
+                renderer.setRenderTarget(null);
+            });
+        });
+
+        const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.8);
+        renderTargetScene.add(ambientLight);
+
+        const material = new THREE.MeshBasicMaterial({map: renderTarget.texture});
+        const geometry = new THREE.BoxGeometry(0.01, 0.25, 1);
+        //const geometry = new THREE.BoxGeometry(0.01, 2, 8);
+        const windshield = new THREE.Mesh(geometry, material);
+        windshield.position.set(0.5, 0.125, 0);
+        scene.add(windshield);
+        this.car.add(windshield);
 
         scene.add(this.car);
+    }
+
+    renderWindshield(){
+        
     }
 }
 
